@@ -416,7 +416,9 @@ $$ M_{MVP} = M_{ortho}M_{persp \rightarrow ortho}M_{view} $$
 - pixel中心在square的中心，坐标为$(x + 0.5, y + 0.5)$，因此每个pixel square占据$1 \times 1$的空间
 - 整个屏幕覆盖所有pixel square，因此屏幕的范围是$(0, 0)$到$(width, height)$
 
-> Note：像素中心坐标的定义在不同的教材中会略有差别，但其他核心定义不会变。虎书是将像素中心定义在整数坐标上
+> Note：像素中心坐标的定义在不同的教材中会略有差别，但其他核心定义不会变
+> 
+> e.g. 虎书将像素中心定义在整数坐标上
 > 
 > <img src="E:/weapons/Graphics/src/games101/screen_def_tiger_book.png" width="50%">
 
@@ -497,3 +499,4 @@ Corner case：点落在三角形边上，图形学里不做统一定义，自行
 
 ##### Antialiasing
 
+TODO: （1）结论：反走样的方法：先模糊后采样（2）why？图像的空域和频域，二维傅里叶变换 -> 采样在频域上的表现，采样定理 -> 采样为什么导致了走样：走样在频率上的解释 -> 先模糊后采样的频率解释（3）图形学反走样的实际方法：one-pixel filter（attention：像素是屏幕空间的一个square，三角形对一个square是有覆盖率的），MSAA，FXAA，TAA
