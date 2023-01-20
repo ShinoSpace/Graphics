@@ -453,7 +453,7 @@ $$ M = M_{vp}M_{ortho}M_{persp \rightarrow ortho}M_{view} $$
 
 --------------------
 
-### Rendering（渲染）
+### Rendering
 
 MVP + 视口变换将空间中的物体（model in a frustum or cuboid）变到了$x \in [0, width] \times y \in [0, height] \times z \in [-1, 1]$的范围内，接下来就是要把东西画在屏幕上
 
@@ -491,12 +491,37 @@ Corner case：点落在三角形边上，图形学里不做统一定义，自行
 
 - 增量遍历：如果是一个扁长的三角形，遍历bbox效率同样不高。最理想情况是一个像素都不多考虑，但这件事做起来不容易，暂且按下不表
 
-简单采样做光栅化的问题很明显，视觉上不自然，出现锯齿（Jaggies or Aliasing）
+简单采样做光栅化的问题很明显，视觉上不自然，出现锯齿（Jaggies），走样（Aliasing）
 
 <div align=center>
 <img src="E:/weapons/Graphics/src/games101/rendering/aliasing_example_0.png" width="30%"> <img src="E:/weapons/Graphics/src/games101/rendering/aliasing_example_1.png" width="30%">
 </div>
 
-##### Antialiasing
+##### Antialiasing: method
 
-TODO: （1）结论：反走样的方法：先模糊后采样（2）why？图像的空域和频域，二维傅里叶变换 -> 采样在频域上的表现，采样定理 -> 采样为什么导致了走样：走样在频率上的解释 -> 先模糊后采样的频率解释（3）图形学反走样的实际方法：one-pixel filter（attention：像素是屏幕空间的一个square，三角形对一个square是有覆盖率的），MSAA，FXAA，TAA
+理论比较长。先理解怎么做，然后从理论上解释为什么这样做
+
+1. 如何做反走样
+
+  （1）直观上，走样源于采样不足，所以最简单的做法就是增大采样率。在图像/屏幕空间下就是（屏幕尺寸保持不变）增多像素的个数（换了一个分辨率更高的屏幕）<br>
+  （2）理论上，走样的原因是采样频率低导致频域上频谱混叠。解决方法是先将高于采样率的频谱过滤掉，即低通滤波（模糊），然后采样
+
+2. MSAA
+
+直观上，当屏幕固定时，采样率低导致pixel center比较稀疏，每个pixel square的size较大，那么简单采样时就会丢掉很多near bound, but out of bound的像素。考虑到屏幕本身不能改变，那么就需要采用更加soft的分配方式。MSAA在单个像素内subsample多个位置，然后为这些亚像素分配灰度，最终每个像素的灰度就是亚像素的平均
+
+<div align=center>
+<img src="E:/weapons/Graphics/src/games101/rendering/MSAA_0_subsample.png" width="30%"> <img src="E:/weapons/Graphics/src/games101/rendering/MSAA_1_average_0.png" width="30%"> <img src="E:/weapons/Graphics/src/games101/rendering/MSAA_1_average_1.png" width="30%"> <img src="E:/weapons/Graphics/src/games101/rendering/MSAA_2_result.png" width="30%">
+</div>
+
+MSAA的本质是在连续的三角形上做均值滤波，卷积核大小等于一个pixel square的大小。卷积中的积分运算并未使用解析解，而是用离散采样求和的方式实现
+
+##### 图形学与机器学习中的积分：闭式解，上下界以及离散求和近似
+
+机器学习中，如果在数学建模或优化目标中出现了积分式，倾向于利用数学方法求出其闭式解或寻找上下界，例如GAN的理论求解。而图形学处理的三维空间中的几何形状的位置、状态多变。以三角形的反走样为例，其边界直线的位置、长度有无数种可能，故而被积函数及积分的上下界就用无数种可能，求一个具有一般性的解析解比较困难。因此**图形学中更倾向于用离散求和去近似积分运算**。另一方面，离散求和的好处是可以最大程度地利用GPU的并行计算能力进行加速，在硬件层面上达到更高的处理效率
+
+##### 理论是为算法打底的
+
+还是以反走样为例，MSAA的理论根基是傅里叶变换、低通滤波及采样定理，最终的实现进行了工程化处理，用离散求和去近似积分操作（连续求和），以求在效果和开销之间trade off
+
+因此，理论是为算法打了一个底，保证了算法一定是对的
