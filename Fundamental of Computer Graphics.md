@@ -163,6 +163,11 @@ ModelView + Projection两种变换合称为MVP变换
 
 **Prerequisite**: [线性变换的几何意义](#数学基础理解线性变换的几何意义)
 
+线性变换矩阵$A$的核心点
+
+1. 换系：从目标系$D$观察任意给定系$S$，$S$的基向量在$D$下的坐标就是矩阵$A$的列向量，线性变换$P_D = AP_S$将任意给定点$P$在$S$下的坐标变为$D$下的坐标
+2. 坐标/向量/刚体变换：通过对基向量的变换完备描述
+
 - 换系视角：位姿矩阵就是换系的变换矩阵
 
 在参考坐标系$D$（目标系，当前视角）下观察相机坐标系$S$的三个轴。整个坐标变换过程涉及：平移 + 线性变换下的换系，后者要求两个系的坐标原点必须重合。因此，先平移后换系更直观
@@ -455,23 +460,23 @@ $$ M = M_{vp}M_{ortho}M_{persp \rightarrow ortho}M_{view} $$
 
 ### Rendering
 
-MVP + 视口变换将空间中的物体（model in a frustum or cuboid）变到了$x \in [0, width] \times y \in [0, height] \times z \in [-1, 1]$的范围内，接下来就是要把东西画在屏幕上
+MVP + 视口变换将空间中的物体（model in a frustum or cuboid）变到了$x \in [0, width] \times y \in [0, height] \times z \in [-1, 1]$的范围内。接下来就是要把东西画在屏幕上，这就是**渲染（Rendering）**
 
 #### Rasterization
 
-物体表面可以分解为若干多边形，光栅化（Rasterization）将这些多边形打散为像素点，显示在屏幕上。那么就需要每个多边形告诉对应像素的RGB值都是多少。
+场景物体表面可以分解为若干多边形，图形学使用三角形作为最基本的多边形
 
-- why triangles?
+- why triangle？
 
 （1）三角形是最简单的多边形，任何多边形都可以打散为若干个三角形的组合<br>
 （2）三角形内部必是平面：四边形沿着对角线稍微一折就变成了非平面的<br>
 （3）三角形内部和外部是清晰的：不会有空洞，不会有凹凸性的问题
 
+光栅化（Rasterization）这一阶段是**计算多边形对像素点的覆盖**
+
 ##### Rasterization as 2D sampling
 
-问题：如何在屏幕上表示给定三角形？也就是说如何将三角形打散为像素？
-
-1. 判断一个点在三角形内部和外部
+1. 判断给定点在三角形内部 or 外部
 
 <div align=center>
 <img src="E:/weapons/Graphics/src/games101/rendering/point_in_triangle.png" width="30%"> <img src="E:/weapons/Graphics/src/games101/rendering/point_out_triangle.png" width="30%">
@@ -483,7 +488,7 @@ Corner case：点落在三角形边上，图形学里不做统一定义，自行
 
 2. 采样（sampling）是最简单的光栅化方式
 
-若pixel中心在三角形内，则pixel square属于三角形
+基本规则：若pixel中心在三角形内，则pixel square属于三角形。有三种遍历像素的方法：
 
 - 遍历整图
 
@@ -497,31 +502,40 @@ Corner case：点落在三角形边上，图形学里不做统一定义，自行
 <img src="E:/weapons/Graphics/src/games101/rendering/aliasing_example_0.png" width="30%"> <img src="E:/weapons/Graphics/src/games101/rendering/aliasing_example_1.png" width="30%">
 </div>
 
-##### Antialiasing: method
+##### Antialiasing
 
-理论比较长。先理解怎么做，然后从理论上解释为什么这样做
+1. 走样的原因
 
-1. 如何做反走样
+场景是一个三维空间上的连续函数，包含几何覆盖关系、着色参数和着色方程。为了将场景显示在屏幕上（渲染），需要将场景离散化到一个个pixel上，这个过程导致了锯齿。
 
-  （1）直观上，走样源于采样不足，所以最简单的做法就是增大采样率。在图像/屏幕空间下就是（屏幕尺寸保持不变）增多像素的个数（换了一个分辨率更高的屏幕）<br>
-  （2）理论上，走样的原因是采样频率低导致频域上频谱混叠。解决方法是先将高于采样率的频谱过滤掉，即低通滤波（模糊），然后采样
+采样是直接且普遍使用的离散化方法。根据奈奎斯特采样定理，只有采样率大于等于信号最高频的两倍时，才能通过离散的采样点完美恢复原始信号。当信号变化快（有较多的高频分量）而采样率不足时就会出现走样，因此走样在频域上的解释就是频谱混叠。这个理论同时给出了两个解决方案：（1）首选增大采样率（2）如果提高采样率的开销过大，就要先滤掉出现混叠的高频分量
 
-2. MSAA
+2. SuperSampling Anti-Aliasing (SSAA)
 
-直观上，当屏幕固定时，采样率低导致pixel center比较稀疏，每个pixel square的size较大，那么简单采样时就会丢掉很多near bound, but out of bound的像素。考虑到屏幕本身不能改变，那么就需要采用更加soft的分配方式。MSAA在单个像素内subsample多个位置，然后为这些亚像素分配灰度，最终每个像素的灰度就是亚像素的平均
+SSAA最简单粗暴，直接增大采样率来解决问题。假设屏幕输出分辨率为$H \times W$，$n^2 \times$SSAA首先渲染一个$nH \times nW$的buffer，然后下采样到$H \times W$。具体来说：
 
-<div align=center>
-<img src="E:/weapons/Graphics/src/games101/rendering/MSAA_0_subsample.png" width="30%"> <img src="E:/weapons/Graphics/src/games101/rendering/MSAA_1_average_0.png" width="30%"> <img src="E:/weapons/Graphics/src/games101/rendering/MSAA_1_average_1.png" width="30%"> <img src="E:/weapons/Graphics/src/games101/rendering/MSAA_2_result.png" width="30%">
-</div>
+**step1** 每个pixel square内采样$n$个点，采样点分布方式不限，统称为采样模板<br>
+**step2** 计算像素中心是否被三角形覆盖<br>
+**step3** run pixel shader进行着色<br>
+**step4** 下采样渲染结果到$H \times W$
 
-MSAA的本质是在连续的三角形上做均值滤波，卷积核大小等于一个pixel square的大小。卷积中的积分运算并未使用解析解，而是用离散采样求和的方式实现
+注意，光栅化只涉及采样和计算覆盖的过程，不包含第三、四两步。
+
+**Preview**：由于超采样直接渲染出来的是一个$n$倍于target size的图像，最终需要下采样到屏幕分辨率才可以显示，这个过程称为**resolve**。对于SSAA，resolve就是下采样，而对于接下来的MSAA，resolve相当于均值滤波。
+
+SSAA在效果上是最好的抗锯齿方法，但代价就是$n^2$的计算复杂度。光栅化计算量较低，这个代价可以接受。但着色阶段的计算开销大，需要优化这个开销。
+
+3. Multi-Sampling Anti-Aliasing (MSAA)
+
+既然着色的开销大，那就仅在光栅化阶段使用supersampling而不对子采样点着色。MSAA在光栅化阶段接受$n^2$的supersampling，与SSAA相同。不同点在于，MSAA计算每个pixel supersampling的覆盖率，而不直接对每个子采样点着色。在着色阶段，对于覆盖率大于0的pixel运行一次pixel shader，并将颜色乘以覆盖率。 
+
+理论上，MSAA的resolve实际是在连续的三角形上做均值滤波，卷积核大小等于一个pixel square的大小。卷积中的积分运算并未使用解析解，而是用离散采样求和的方式实现
 
 ##### 图形学与机器学习中的积分：闭式解，上下界以及离散求和近似
 
-机器学习中，如果在数学建模或优化目标中出现了积分式，倾向于利用数学方法求出其闭式解或寻找上下界，例如GAN的理论求解。而图形学处理的三维空间中的几何形状的位置、状态多变。以三角形的反走样为例，其边界直线的位置、长度有无数种可能，故而被积函数及积分的上下界就用无数种可能，求一个具有一般性的解析解比较困难。因此**图形学中更倾向于用离散求和去近似积分运算**。另一方面，离散求和的好处是可以最大程度地利用GPU的并行计算能力进行加速，在硬件层面上达到更高的处理效率
+机器学习中，如果在数学建模或优化目标中出现了积分式，倾向于利用数学方法求出其闭式解或寻找上下界，以便于进行优化，例如GAN的理论求解。
 
-##### 理论是为算法打底的
+图形学处理的三维空间中的几何形状的位置、状态多变。以三角形的反走样为例，其边界直线的位置、长度有无数种可能，故而被积函数及积分的上下界就用无数种可能，求一个具有一般性的解析解比较困难。因此**图形学中更倾向于用离散求和去近似积分运算**。另一方面，离散求和的好处是可以最大程度地利用GPU的并行计算能力进行加速，在硬件层面上达到更高的处理效率。
 
-还是以反走样为例，MSAA的理论根基是傅里叶变换、低通滤波及采样定理，最终的实现进行了工程化处理，用离散求和去近似积分操作（连续求和），以求在效果和开销之间trade off
+解析求解与采样并无绝对意义上的优劣，二者并不矛盾。闭式解难求时就用采样求和进行数值近似，闭式解可求时就考虑显式优化。
 
-因此，理论是为算法打了一个底，保证了算法一定是对的
