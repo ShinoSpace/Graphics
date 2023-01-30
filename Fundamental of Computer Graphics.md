@@ -472,7 +472,7 @@ MVP + 视口变换将空间中的物体（model in a frustum or cuboid）变到�
 （2）三角形内部必是平面：四边形沿着对角线稍微一折就变成了非平面的<br>
 （3）三角形内部和外部是清晰的：不会有空洞，不会有凹凸性的问题
 
-光栅化（Rasterization）这一阶段是**计算多边形对像素点的覆盖**
+光栅化（Rasterization）阶段**计算多边形对像素点的覆盖**，不考虑着色问题
 
 ##### Rasterization as 2D sampling
 
@@ -482,18 +482,33 @@ MVP + 视口变换将空间中的物体（model in a frustum or cuboid）变到�
 <img src="E:/weapons/Graphics/src/games101/rendering/point_in_triangle.png" width="30%"> <img src="E:/weapons/Graphics/src/games101/rendering/point_out_triangle.png" width="30%">
 </div>
 
-定一个三角形的环绕方向 -> 外积向量方向一致则在内部，反之则在外部。左图，$\overrightarrow{AB} \times \overrightarrow{AP}, \overrightarrow{BC} \times \overrightarrow{BP}, \overrightarrow{CA} \times \overrightarrow{CP}$同向，$P$在$\triangle ABC$内。右图同理，$Q$在$\triangle P_0P_1P_2$外。
+定一个三角形的环绕方向 -> **叉积结果的$z$分量同号则在内部，反之则在外部**。
 
-Corner case：点落在三角形边上，图形学里不做统一定义，自行规定处理方式即可。
+例如上左图，$\overrightarrow{AB} \times \overrightarrow{AP}, \overrightarrow{BC} \times \overrightarrow{BP}, \overrightarrow{CA} \times \overrightarrow{CP}$的$z$分量均为正，则$P$点在$\triangle ABC$内。右图，$\overrightarrow{P_2P_0} \times \overrightarrow{P_2Q}$的$z$为负，而$\overrightarrow{P_0P_1} \times \overrightarrow{P_0Q}$和$\overrightarrow{P_1P_2} \times \overrightarrow{P_1Q}$的$z$为正，三者不同号，因此$Q$点在$\triangle P_0P_1P_2$外。
+
+Corner case: 点落在三角形边上，图形学里不做统一定义，自行规定处理方式即可。
+
+在实际光栅化计算时，三角形顶点为三维向量，像素中心坐标为二维向量，计算叉积时只需要drop $z$ or 赋任意值，因为叉积结果的$z$与输入向量的$z$无关。Here's the proof
+
+$$ \vec{a} \times \vec{b} = \begin{vmatrix}
+\vec{i} & \vec{j} & \vec{k} \\
+x_1 & y_1 & z_1 \\
+x_2 & y_2 & z_2
+\end{vmatrix}
+$$
+
+判断像素中心是否在三角形内部，只需判断两个向量叉积结果的$z$坐标是否同号即可，因此对上式按第一行展开，只取$\vec{k}$项
+
+$$ z = (x_1 y_2 - x_2 y_1) \vec{k} $$
+
+无论从结果还是展开过程上看，$z$坐标与原始向量$\vec{a}, \vec{b}$的$z_1, z_2$无关，因此可以给$z_1, z_2$赋任意值，或更简单，直接根据上式计算$x_1 y_2 - x_2 y_1$，判断符号即可。
 
 2. 采样（sampling）是最简单的光栅化方式
 
 基本规则：若pixel中心在三角形内，则pixel square属于三角形。有三种遍历像素的方法：
 
 - 遍历整图
-
 - 遍历最小外接正矩形（bbox）：显然完整遍历整张图是低效的。一种加速方法是找到三角形的最小外接正矩形，遍历这个bbox内的每个pixel即可
-
 - 增量遍历：如果是一个扁长的三角形，遍历bbox效率同样不高。最理想情况是一个像素都不多考虑，但这件事做起来不容易，暂且按下不表
 
 简单采样做光栅化的问题很明显，视觉上不自然，出现锯齿（Jaggies），走样（Aliasing）
