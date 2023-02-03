@@ -407,9 +407,7 @@ $$ M_{MVP} = M_{ortho}M_{persp \rightarrow ortho}M_{view} $$
 
 #### Viewport Transform
 
-先定义屏幕（screen）：就是通常的图像定义。到目前为止，一个像素就是一个内部颜色不会发生变化的小方块（square）。这种定义方式不严谨，因为像素本身是比较复杂的东西，但现在这样理解没有问题（之后再做修正）。
-
-屏幕（图像）空间
+先定义屏幕（screen）：像素定义为内部颜色不会发生变化的小方块（pixel square）
 
 <div align=center>
 <img src="E:/weapons/Graphics/src/games101/screen_def.png" width="50%">
@@ -417,9 +415,10 @@ $$ M_{MVP} = M_{ortho}M_{persp \rightarrow ortho}M_{view} $$
 
 注意：
 
-- pixel **square**（而非pixel中心）的坐标$x$和$y$是离散的整数
-- pixel中心在square的中心，坐标为$(x + 0.5, y + 0.5)$，因此每个pixel square占据$1 \times 1$的空间
-- 整个屏幕覆盖所有pixel square，因此屏幕的范围是$(0, 0)$到$(width, height)$
+- 图像是场景内物体在屏幕上渲染的结果，渲染前的空间仍然是连续的，因此**屏幕仍然处于连续空间中**，每个pixel都是**连续的square**
+- pixel **square**（而非pixel中心）的坐标$x$和$y$是离散的整数。也就是说，每个像素的长宽均为1
+- pixel中心在square的中心，坐标为$(x + 0.5, y + 0.5)$
+- 整个屏幕覆盖所有pixel square，因此屏幕处于从$(0, 0)$到$(width, height)$的连续区域内
 
 > Note：像素中心坐标的定义在不同的教材中会略有差别，但其他核心定义不会变
 > 
@@ -462,7 +461,7 @@ $$ M = M_{vp}M_{ortho}M_{persp \rightarrow ortho}M_{view} $$
 
 MVP + 视口变换将空间中的物体（model in a frustum or cuboid）变到了$x \in [0, width] \times y \in [0, height] \times z \in [-1, 1]$的范围内。接下来就是要把东西画在屏幕上，这就是**渲染（Rendering）**
 
-#### Rasterization
+### Rasterization
 
 场景物体表面可以分解为若干多边形，图形学使用三角形作为最基本的多边形
 
@@ -474,7 +473,7 @@ MVP + 视口变换将空间中的物体（model in a frustum or cuboid）变到�
 
 光栅化（Rasterization）阶段**计算多边形对像素点的覆盖**，不考虑着色问题
 
-##### Rasterization as 2D sampling
+#### Rasterization as 2D sampling
 
 1. 判断给定点在三角形内部 or 外部
 
@@ -517,7 +516,7 @@ $$ z = (x_1 y_2 - x_2 y_1) \vec{k} $$
 <img src="E:/weapons/Graphics/src/games101/rendering/aliasing_example_0.png" width="30%"> <img src="E:/weapons/Graphics/src/games101/rendering/aliasing_example_1.png" width="30%">
 </div>
 
-##### Antialiasing
+#### Antialiasing
 
 1. 走样的原因
 
@@ -544,13 +543,28 @@ SSAA在效果上是最好的抗锯齿方法，但代价就是$n^2$的计算复�
 
 既然着色的开销大，那就仅在光栅化阶段使用supersampling而不对子采样点着色。MSAA在光栅化阶段接受$n^2$的supersampling，与SSAA相同。不同点在于，MSAA计算每个pixel supersampling的覆盖率，而不直接对每个子采样点着色。在着色阶段，对于覆盖率大于0的pixel运行一次pixel shader，并将颜色乘以覆盖率。 
 
-理论上，MSAA的resolve实际是在连续的三角形上做均值滤波，卷积核大小等于一个pixel square的大小。卷积中的积分运算并未使用解析解，而是用离散采样求和的方式实现
+理论上，MSAA的resolve实际是在连续的三角形上做均值滤波，卷积核大小等于一个pixel square的大小。卷积中的积分运算并未使用解析解，而是用离散采样求和的方式实现。
 
-##### 图形学与机器学习中的积分：闭式解，上下界以及离散求和近似
+#### 图形学与机器学习中的积分：闭式解，上下界以及离散求和近似
 
 机器学习中，如果在数学建模或优化目标中出现了积分式，倾向于利用数学方法求出其闭式解或寻找上下界，以便于进行优化，例如GAN的理论求解。
 
 图形学处理的三维空间中的几何形状的位置、状态多变。以三角形的反走样为例，其边界直线的位置、长度有无数种可能，故而被积函数及积分的上下界就用无数种可能，求一个具有一般性的解析解比较困难。因此**图形学中更倾向于用离散求和去近似积分运算**。另一方面，离散求和的好处是可以最大程度地利用GPU的并行计算能力进行加速，在硬件层面上达到更高的处理效率。
 
 解析求解与采样并无绝对意义上的优劣，二者并不矛盾。闭式解难求时就用采样求和进行数值近似，闭式解可求时就考虑显式优化。
+
+#### z-buffer (深度缓冲、深度测试)
+
+梳理一下光栅化过程：MVP+视口变换得到$x \in [0, width] \times y \in [0, height] \times z\in [-1, 1]$的立方体 -> 屏幕空间像素采样 + 反走样的超采样部分 -> 判断pixel center是否inside triangle，确定像素覆盖。
+
+为了将场景画在屏幕上，接下来还有两件事：1. 处理遮挡关系（可见性）2. 着色。z-buffer用于处理遮挡关系。
+
+相机视角下，三维场景中的物体由于在相机坐标系下的深度不同，可能会出现遮挡（occlusion）。z-buffer就是进行深度判断，确定渲染后物体在图像上的**可见性（visibility**）。
+
+算法本身非常朴素：遍历每个三角形，记录所有**采样点**的最小深度
+
+<div align=center>
+<img src="E:/weapons/Graphics/src/games101/rendering/z-buffer.png" width="50%">
+</div>
+### Shading
 
