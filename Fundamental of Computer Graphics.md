@@ -535,13 +535,21 @@ SSAA最简单粗暴，直接增大采样率来解决问题。假设屏幕输出�
 
 注意，光栅化只涉及采样和计算覆盖的过程，不包含第三、四两步。
 
-**Preview**：由于超采样直接渲染出来的是一个$n$倍于target size的图像，最终需要下采样到屏幕分辨率才可以显示，这个过程称为**resolve**。对于SSAA，resolve就是下采样，而对于接下来的MSAA，resolve相当于均值滤波。
+**Preview**：超采样直接渲染出来的是一个$n$倍于target size的图像，最终需要下采样到屏幕分辨率才可以显示，这个过程称为**resolve**。对于SSAA，resolve就是下采样，而对于接下来的MSAA，resolve相当于均值滤波。
 
-SSAA在效果上是最好的抗锯齿方法，但代价就是$n^2$的计算复杂度。光栅化计算量较低，这个代价可以接受。但着色阶段的计算开销大，需要优化这个开销。
+<div align=center>
+<img src="E:/weapons/Graphics/src/games101/rendering/SSAA_supersampling.png" width="50%">
+</div>
+
+SSAA在效果上是最好的抗锯齿方法，代价就是$n^2$的计算复杂度。光栅化计算量较低，这个代价可以接受。但着色阶段的计算开销大，需要优化这个开销。
 
 3. Multi-Sampling Anti-Aliasing (MSAA)
 
 既然着色的开销大，那就仅在光栅化阶段使用supersampling而不对子采样点着色。MSAA在光栅化阶段接受$n^2$的supersampling，与SSAA相同。不同点在于，MSAA计算每个pixel supersampling的覆盖率，而不直接对每个子采样点着色。在着色阶段，对于覆盖率大于0的pixel运行一次pixel shader，并将颜色乘以覆盖率。 
+
+<div align=center>
+<img src="E:/weapons/Graphics/src/games101/rendering/MSAA_average.png" width="50%">
+</div>
 
 理论上，MSAA的resolve实际是在连续的三角形上做均值滤波，卷积核大小等于一个pixel square的大小。卷积中的积分运算并未使用解析解，而是用离散采样求和的方式实现。
 
@@ -566,5 +574,25 @@ SSAA在效果上是最好的抗锯齿方法，但代价就是$n^2$的计算复�
 <div align=center>
 <img src="E:/weapons/Graphics/src/games101/rendering/z-buffer.png" width="50%">
 </div>
+
 ### Shading
 
+光栅化完成后，我们确定了场景内物体对屏幕上像素的覆盖关系，做了抗锯齿，也处理了相机视角下物体的遮挡关系（可见性）。接下来将物体颜色直接分配给对应的像素似乎就完成了渲染。但除了颜色，明暗的不同也会影响物体颜色的观测结果。所以要同时引入物体颜色、明暗等因素构建数学模型来描述着色过程。
+
+图形学对着色（shading）的定义：在物体上应用材质（material）的过程，或者说是根据物体材质进行染色的过程。不同的**材质**与**光线**相互作用，产生不同的视觉效果。
+
+#### Blinn-Phong Reflectance Model
+
+直观感受上，一个真实场景成像的光照主要分为三部分
+
+- 镜面高光：观察视角处于光线的镜面反射附近，形成高光
+- 漫反射：物体表面不平整，光线向各个方向均匀反射
+- 环境光（间接光照）：物体不接受直接光照的位置也能看到颜色，是反射了其他物体的反射光
+
+<div align=center>
+<img src="E:/weapons/Graphics/src/games101/rendering/blinn-phong_light_type.png" width="50%">
+</div>
+
+Blinn-Phong是基础的光线反射模型，主要建模镜面高光和漫反射，最复杂的环境光部分用常系数简单处理，最终的模型是这三部分的简单求和。
+
+##### Diffusion reflection
