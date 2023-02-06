@@ -581,6 +581,24 @@ SSAA在效果上是最好的抗锯齿方法，代价就是$n^2$的计算复杂�
 
 图形学对着色（shading）的定义：在物体上应用材质（material）的过程，或者说是根据物体材质进行染色的过程。不同的**材质**与**光线**相互作用，产生不同的视觉效果。
 
+#### shading is local
+
+着色模型只考虑着色点附近的很小的一块区域，因此这个范围内的物体表面可以视为一个平面。与之相对的，对物体在地面上的阴影着色就由non-local的模型负责。
+
+<div align=center>
+<img src="E:/weapons/Graphics/src/games101/rendering/shading_shadow.png" width="50%">
+</div>
+
+> **local & non-local**: local和non-local是相对的，**超出local model建模的区域就是non-local的**。例如，shading建模光照时只考虑着色点附近的一小块区域，因此shading is local。阴影（shadow）属于shading建模区域外的部分，因此对shading来说，shadow就是non-local的。
+> 
+> 理解why model is local的时候，举出non-local的例子，对理解会有很大帮助。
+
+#### shading input
+
+<div align=center>
+<img src="E:/weapons/Graphics/src/games101/rendering/shading_input.png" width="50%">
+</div>
+
 #### Blinn-Phong Reflectance Model
 
 直观感受上，一个真实场景成像的光照主要分为三部分
@@ -596,3 +614,7 @@ SSAA在效果上是最好的抗锯齿方法，代价就是$n^2$的计算复杂�
 Blinn-Phong是基础的光线反射模型，主要建模镜面高光和漫反射，最复杂的环境光部分用常系数简单处理，最终的模型是这三部分的简单求和。
 
 ##### Diffusion reflection
+
+- 漫反射：光线入射到粗糙的物体表面，反射光向各个方向射出，而不仅仅是镜面反射方向。
+- 理想漫反射表面：反射光的光强在反射面上均匀分布。这个理想漫反射模型称为Lambertian reflectance（朗伯反射）。Blinn-Phong以该模型建模漫反射。
+
