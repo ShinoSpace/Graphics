@@ -221,6 +221,13 @@ $$ P_{ref} = T_{rc}P_{cam}$$
 <img src="E:/weapons/Graphics/src/games101/MVP%20Transform/projection_range_[near,%20far].png" width="50%">
 </div>
 
+- 为什么没有drop $z$？
+
+有两个主要原因：
+
+1. 次要原因：直观上，如果场景中只有一个物体，当然可以drop $z$完成投影，但实际场景不止一个物体，在相机视角下都会有遮挡关系。
+2. 主要原因：场景物体是连续的，屏幕是离散的，这两者间需要一步离散化的操作，这就是渲染中的光栅化，在下面一大章完成这件事
+
 ##### 正交投影与透视投影的关系
 
 相机无穷远，透视投影与正交投影相同：相机离近平面（和远平面）越远，近、远两平面的尺寸差距越小，光线平行度越高。如果相机（距离近平面）无穷远，且近平面和远平面距离有限，那么两平面大小相同，光线平行，透视投影变为正交投影。
@@ -583,7 +590,7 @@ SSAA在效果上是最好的抗锯齿方法，代价就是$n^2$的计算复杂�
 
 #### shading is local
 
-着色模型只考虑着色点附近的很小的一块区域，因此这个范围内的物体表面可以视为一个平面。与之相对的，对物体在地面上的阴影着色就由non-local的模型负责。
+着色模型只考虑着色点附近的很小的一块区域，因此这个范围内的物体表面（surface）可以视为一个平面。与之相对的，对物体在地面上的阴影着色就由non-local的模型负责。
 
 <div align=center>
 <img src="E:/weapons/Graphics/src/games101/rendering/shading_shadow.png" width="50%">
@@ -613,8 +620,41 @@ SSAA在效果上是最好的抗锯齿方法，代价就是$n^2$的计算复杂�
 
 Blinn-Phong是基础的光线反射模型，主要建模镜面高光和漫反射，最复杂的环境光部分用常系数简单处理，最终的模型是这三部分的简单求和。
 
+##### point light
+
+一般将光源视为点光源，光的传播面是一个球面，球面上光强均匀分布。光源功率一定，在球面上的能量（光强在球上的面积分）就是固定的，由此可推出任意距光源$r$处的光照强度$I_r$
+
+$$I \cdot 4\pi = I_r \cdot 4 \pi r^2 \Rightarrow I_r = I / r^2$$
+
+$I$为单位距离$r=1$处的光强
+
+<div align=center>
+<img src="E:/weapons/Graphics/src/games101/rendering/point_light_intensity.png" width="50%">
+</div>
+
 ##### Diffusion reflection
 
-- 漫反射：光线入射到粗糙的物体表面，反射光向各个方向射出，而不仅仅是镜面反射方向。
-- 理想漫反射表面：反射光的光强在反射面上均匀分布。这个理想漫反射模型称为Lambertian reflectance（朗伯反射）。Blinn-Phong以该模型建模漫反射。
+- 漫反射：光线入射到粗糙的物体表面，反射光向各个方向射出，而不仅仅是镜面反射方向
+- 朗伯反射（Lambertian reflectance）：物体表面是理想的漫反射表面，反射光的光强在反射面上均匀分布
 
+Blinn-Phong将漫反射部分建模为朗伯反射。
+
+- Lambert's cosine law
+
+除光源外，物体表面接受的入射光总量也会影响反射光强。正式的说法是：当光源强度一定时，物体表面漫反射的反射光强与入射光强正相关。Lambert's law证明，单位面积接收的光强正比于入射角的余弦
+
+$$I_{rec} \propto \cos \theta = n \cdot l$$
+
+<div align=center>
+<img src="E:/weapons/Graphics/src/games101/rendering/diffusion_lambert_law.png" width="50%">
+</div>
+
+- Lambertian diffuse shading
+
+反射光需要同时考虑入射光和物体表面材质对不同频率的光的吸收率，并且光源只能出现在反射面的上半部分（$0\degree \leq$ 入射角 $< 90\degree$）
+
+$$L_d = k_d (I / r^2) \max(0, n \cdot l)$$
+
+<div align=center>
+<img src="E:/weapons/Graphics/src/games101/rendering/lambertian_diffuse_shading.png" width="50%">
+</div>
