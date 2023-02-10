@@ -602,9 +602,21 @@ SSAA在效果上是最好的抗锯齿方法，代价就是$n^2$的计算复杂�
 
 #### shading input
 
+着色的建模过程集中在着色点（shading point）上，在着色点附近的极小范围内的物体表面可视为平面。建立光照模型需要：
+
+- 表面法向$n$
+- 光照方向$l$
+- 相机视角方向$v$
+- 物体表面（材质）参数，例如颜色，光泽度等
+
+$n, l, v$均为单位向量
+
 <div align=center>
 <img src="E:/weapons/Graphics/src/games101/rendering/shading_input.png" width="50%">
 </div>
+
+> 颜色：表面对不同波长 or 频率的光的吸收率，是$\lambda$ or $f$的函数
+> 光泽度（gloss/shininess）：表面在镜面反射方向上的反射能力
 
 #### Blinn-Phong Reflectance Model
 
@@ -635,9 +647,7 @@ $I$为单位距离$r=1$处的光强
 ##### Diffusion reflection
 
 - 漫反射：光线入射到粗糙的物体表面，反射光向各个方向射出，而不仅仅是镜面反射方向
-- 朗伯反射（Lambertian reflectance）：物体表面是理想的漫反射表面，反射光的光强在反射面上均匀分布
-
-Blinn-Phong将漫反射部分建模为朗伯反射。
+- 朗伯反射（Lambertian reflectance）：物体表面是理想的漫反射表面，反射光的光强在反射面上均匀分布。Blinn-Phong使用该模型建模漫反射
 
 - Lambert's cosine law
 
@@ -646,7 +656,7 @@ Blinn-Phong将漫反射部分建模为朗伯反射。
 $$I_{rec} \propto \cos \theta = n \cdot l$$
 
 <div align=center>
-<img src="E:/weapons/Graphics/src/games101/rendering/diffusion_lambert_law.png" width="50%">
+<img src="E:/weapons/Graphics/src/games101/rendering/blinn-phong_diffusion_lambert_law.png" width="50%">
 </div>
 
 - Lambertian diffuse shading
@@ -656,5 +666,46 @@ $$I_{rec} \propto \cos \theta = n \cdot l$$
 $$L_d = k_d (I / r^2) \max(0, n \cdot l)$$
 
 <div align=center>
-<img src="E:/weapons/Graphics/src/games101/rendering/lambertian_diffuse_shading.png" width="50%">
+<img src="E:/weapons/Graphics/src/games101/rendering/blinn-phong_lambertian_diffuse_shading.png" width="50%">
 </div>
+
+##### Specular reflection
+
+看到高光的强弱程度取决于观测方向是否接近于反射光的方向。这里有两种方法：Phong模型直接计算镜面反射方向，Blinn-Phong模型计算半程向量（half vector）。
+
+- 半程向量（half vector）
+
+直观上我们希望计算观测方向与镜面反射方向的接近程度。镜面反射方向不是直接已知量，但法向是光照方向与镜面反射方向的角分线方向。因此自然想到比较「表面法向」与「光照方向与观测方向的角分线方向」的接近程度
+
+<div align=center>
+<img src="E:/weapons/Graphics/src/games101/rendering/blinn-phong_specular_half_vector.png" width="50%">
+</div>
+
+- 镜面反射方向
+
+直接求解镜面反射方向难度并不大：设沿镜面反射方向的单位向量为$r$。$l + r$的方向与$n$相同，$l, r$长度相等，那么$l, r, k*n \hspace{3pt} (k \in R)$就能构成一个等腰三角形
+
+$$2(l \cdot n)n = l + r \Rightarrow r = 2(l \cdot n)n - l$$
+
+可以验证这个结果的正确性：入射角与反射角相等，因此应有$r\cdot n$等于$l\cdot n$，简单计算$r\cdot n$即可验证等式成立。
+
+将Blinn-Phong镜面反射的$n \cdot h$替换为$v \cdot r$即得Phong模型的镜面反射项
+
+$$L_s = k_s(I / r^2)\max (0, v\cdot r)^p$$
+
+##### Ambient light
+
+环境光是非常复杂的弹弹乐，Blinn-Phong简单将这一项处理为常数项
+
+<div align=center>
+<img src="E:/weapons/Graphics/src/games101/rendering/blinn-phong_ambient_term.png" width="50%">
+</div>
+
+##### Blinn-Phong reflectance model
+
+完整的Blinn-Phong光照模型就是以上三部分求和
+
+<div align=center>
+<img src="E:/weapons/Graphics/src/games101/rendering/blinn-phong_reflectance_model.png" width="50%">
+</div>
+
