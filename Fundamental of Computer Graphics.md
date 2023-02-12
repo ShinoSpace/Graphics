@@ -537,7 +537,7 @@ SSAA最简单粗暴，直接增大采样率来解决问题。假设屏幕输出�
 
 **step1** 每个pixel square内采样$n$个点，采样点分布方式不限，统称为采样模板<br>
 **step2** 计算像素中心是否被三角形覆盖<br>
-**step3** run pixel shader进行着色<br>
+**step3** run fragment/pixel shader进行着色<br>
 **step4** 下采样渲染结果到$H \times W$
 
 注意，光栅化只涉及采样和计算覆盖的过程，不包含第三、四两步。
@@ -588,9 +588,11 @@ SSAA在效果上是最好的抗锯齿方法，代价就是$n^2$的计算复杂�
 
 图形学对着色（shading）的定义：在物体上应用材质（material）的过程，或者说是根据物体材质进行染色的过程。不同的**材质**与**光线**相互作用，产生不同的视觉效果。
 
-#### shading is local
+着色需要三部分信息：1. 场景内物体的几何表示，包括三角形或多边形的顶点、法线。2. 光照/着色模型。3. 着色频率。在**图形学/渲染管线（Graphics/Rendering Pipeline）中**，这三部分（特别是着色频率）决定了各着色器（shader）的运行方式。
 
-着色模型只考虑着色点附近的很小的一块区域，因此这个范围内的物体表面（surface）可以视为一个平面。与之相对的，对物体在地面上的阴影着色就由non-local的模型负责。
+#### Shading is local
+
+着色模型只考虑着色点附近的很小的一块区域，因此这个范围内的物体表面（Surface）可以视为一个平面。与之相对的，对物体在地面上的阴影着色就由non-local的模型负责。
 
 <div align=center>
 <img src="E:/weapons/Graphics/src/games101/rendering/shading_shadow.png" width="50%">
@@ -600,7 +602,7 @@ SSAA在效果上是最好的抗锯齿方法，代价就是$n^2$的计算复杂�
 > 
 > 理解why model is local的时候，举出non-local的例子，对理解会有很大帮助。
 
-#### shading input
+#### Shading input
 
 着色的建模过程集中在着色点（shading point）上，在着色点附近的极小范围内的物体表面可视为平面。建立光照模型需要：
 
@@ -632,7 +634,7 @@ $n, l, v$均为单位向量
 
 Blinn-Phong是基础的光线反射模型，主要建模镜面高光和漫反射，最复杂的环境光部分用常系数简单处理，最终的模型是这三部分的简单求和。
 
-##### point light
+##### Point light
 
 一般将光源视为点光源，光的传播面是一个球面，球面上光强均匀分布。光源功率一定，在球面上的能量（光强在球上的面积分）就是固定的，由此可推出任意距光源$r$处的光照强度$I_r$
 
@@ -671,11 +673,11 @@ $$L_d = k_d (I / r^2) \max(0, n \cdot l)$$
 
 ##### Specular reflection
 
-看到高光的强弱程度取决于观测方向是否接近于反射光的方向。这里有两种方法：Phong模型直接计算镜面反射方向，Blinn-Phong模型计算半程向量（half vector）。
+看到高光的强弱程度取决于观测方向是否接近于反射光的方向。这里有两种方法：Phong模型直接计算镜面反射方向，Blinn-Phong模型计算**半程向量（half vector）**
 
-- 半程向量（half vector）
+- 半程向量
 
-直观上我们希望计算观测方向与镜面反射方向的接近程度。镜面反射方向不是直接已知量，但法向是光照方向与镜面反射方向的角分线方向。因此自然想到比较「表面法向」与「光照方向与观测方向的角分线方向」的接近程度
+直观上我们希望计算观测方向与镜面反射方向的接近程度。镜面反射方向不是直接已知量，但法向是光照方向与镜面反射方向的角分线方向，因此自然想到与法向比较接近程度
 
 <div align=center>
 <img src="E:/weapons/Graphics/src/games101/rendering/blinn-phong_specular_half_vector.png" width="50%">
@@ -708,4 +710,8 @@ $$L_s = k_s(I / r^2)\max (0, v\cdot r)^p$$
 <div align=center>
 <img src="E:/weapons/Graphics/src/games101/rendering/blinn-phong_reflectance_model.png" width="50%">
 </div>
+
+#### Shading frequency
+
+#### Graphics/Rendering Pipeline
 
