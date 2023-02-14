@@ -703,7 +703,7 @@ $$L_s = k_s(I / r^2)\max (0, v\cdot r)^p$$
 <img src="E:/weapons/Graphics/src/games101/rendering/blinn-phong_ambient_term.png" width="50%">
 </div>
 
-##### Blinn-Phong reflectance model
+##### Full model
 
 完整的Blinn-Phong光照模型就是以上三部分求和
 
@@ -711,7 +711,37 @@ $$L_s = k_s(I / r^2)\max (0, v\cdot r)^p$$
 <img src="E:/weapons/Graphics/src/games101/rendering/blinn-phong_reflectance_model.png" width="50%">
 </div>
 
-#### Shading frequency
+#### Shading Frequencies
+
+着色频率直接影响最终的渲染效果
+
+<div align=center>
+<img src="E:/weapons/Graphics/src/games101/rendering/shading_frequencies_visual_effect.png" width="50%">
+</div>
+
+- Flat shading：每个多边形只计算一次颜色
+
+<div align=center>
+<img src="E:/weapons/Graphics/src/games101/rendering/flat_shading.png" width="50%">
+</div>
+
+- Gouraud shading：计算多边形每个顶点的法向量，应用光照模型计算顶点颜色，然后将颜色插值到每个pixel上
+
+<div align=center>
+<img src="E:/weapons/Graphics/src/games101/rendering/gouraud_shading.png" width="50%">
+</div>
+
+- Phong shading：计算多边形每个顶点的法向量，插值计算pixel的法向量，然后着色
+
+<div align=center>
+<img src="E:/weapons/Graphics/src/games101/rendering/gouraud_shading.png" width="50%">
+</div>
+
+接下来要解决两个问题：1. 如何计算顶点的法向量？2. 如何插值？
+
+#### Vertex Normal
+
+#### Braycentric interpolation
 
 #### Graphics/Rendering Pipeline
 
