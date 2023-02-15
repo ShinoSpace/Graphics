@@ -292,11 +292,11 @@ $$
 如果直接将上式转化为矩阵形式
 
 $$ \begin{pmatrix}
-x' \\ y' \\ z' = ? \\ 1
+nx/z \\ ny/z \\ unknown \\ 1
 \end{pmatrix}
 = \begin{pmatrix}
-n/z & 0 & 0 & 0 \\
-0 & n/z & 0 & 0 \\
+n & 0 & 0 & 0 \\
+0 & n & 0 & 0 \\
 ? & ? & ? & ? \\
 0 & 0 & 0 & 1
 \end{pmatrix} \begin{pmatrix}
@@ -304,9 +304,7 @@ x \\ y \\ z \\ 1
 \end{pmatrix}
 $$
 
-由于目前还不知道$z \rightarrow z^{\prime}$的映射关系，因此变换矩阵的第三行元素、输出$z^{\prime}$暂时用问号代替。上式中，变换矩阵与输入点的$z$坐标相关，这是有问题的：变换矩阵描述的是一般变化，应与输入无关。造成这个问题的主要原因是$1/z$的系数。
-
-任意齐次坐标乘以任意不为0的常数，表示的点不变。那么就将矩阵中的$1/z$提出来，乘到等式左边的输出坐标即可
+由于目前还不知道$z \rightarrow z^{\prime}$的映射关系，因此变换矩阵的第三行元素、输出$z^{\prime}$暂时用问号代替。等式左侧利用任意齐次坐标的性质：乘以任意不为0的常数，表示的点不变
 
 $$ \begin{gather}
 \begin{pmatrix}
@@ -320,7 +318,7 @@ nx/z \\ ny/z \\ unknown \\ 1
 nx \\ ny \\ still \hspace{3pt} unknown \\ z
 \end{pmatrix} \\ \\
 \begin{pmatrix}
-nx \\ ny \\ ? \\ z
+nx \\ ny \\ still \hspace{3pt} unknown \\ z
 \end{pmatrix}
 = \begin{pmatrix}
 n & 0 & 0 & 0 \\
@@ -333,10 +331,25 @@ x \\ y \\ z \\ 1
 \end{gather}
 $$
 
+对输出的齐次坐标乘以$z$的更深层原因是：变换矩阵应与输入无关，即：对不同输入，变换矩阵应该是恒定的。因此下面的变换矩阵是欠妥的
+
+$$ \begin{pmatrix}
+nx/z \\ ny/z \\ unknown \\ 1
+\end{pmatrix}
+= \begin{pmatrix}
+n/z & 0 & 0 & 0 \\
+0 & n/z & 0 & 0 \\
+? & ? & ? & ? \\
+0 & 0 & 0 & 1
+\end{pmatrix} \begin{pmatrix}
+x \\ y \\ z \\ 1
+\end{pmatrix}
+$$
+
 注意两件事：
 
-- 变换的直接输出是$(nx, ny, ?, z)$，最后一维$w$是输入点的$z$
-- 变换矩阵的最后一行在计算上有无数组解：$(0, 0, 1, 0) \hspace{3pt} or \hspace{3pt} (0 ,0, k, (1-k)z), \hspace{2pt} k\in R$，后一组解再次与输入$z$有关，舍弃
+- 变换的直接输出是$(nx, ny, ?, z)$，**最后一维$w$是输入点的深度$z$**
+- 变换矩阵的最后一行在计算上有无数组解：$(0, 0, 1, 0) \hspace{3pt}$or$\hspace{3pt} (0 ,0, k, (1-k)z), \hspace{2pt} k\in R$，后一组解与输入$z$有关，舍弃
 
 将系数放到输出有三个原因：
 
@@ -741,7 +754,31 @@ $$L_s = k_s(I / r^2)\max (0, v\cdot r)^p$$
 
 #### Vertex Normal
 
+顶点法向计算非常朴素：顶点所在的所有三角形的法向取算数平均。更细致一点，可以计算各个三角形的贡献度（例如计算面积比例）作为权重进行加权平均。这种（加权）平均的方法现在仍然是广泛使用的
+
+<div align=center>
+<img src="E:/weapons/Graphics/src/games101/rendering/vertex_normal.png" width="50%">
+</div>
+
 #### Braycentric interpolation
+
+在三角形内部插值的系数是**重心坐标（Braycentric coordinates）**。任意对象均可插值：color, normal, depth, material attributes, etc.
+
+<div align=center>
+<img src="E:/weapons/Graphics/src/games101/rendering/vertex_normal.png" width="50%">
+</div>
+
+插值系数$\alpha, \beta, \gamma$的计算有两种方法：求面积（外积）或直接用坐标硬算
+
+<div align=center>
+<img src="E:/weapons/Graphics/src/games101/rendering/braycentric_coord_area_compute.png" width="30%"> <img src="E:/weapons/Graphics/src/games101/rendering/braycentric_coord_direct_compute.png" width="30%">
+</div>
+
+#### Perspective-Correct interpolation
+
+问题：真实的插值应该发生在实际三维场景下，但实际上面的插值都是将MVP+视口变换后的场景投影在屏幕空间后（simply drop $z$）再根据二维坐标计算插值系数（重心坐标）。三维和二维空间下的插值系数显然不相等，原因就是透视投影和透视除法。因此，需要对二维空间下的插值系数进行一次矫正，这就是**透视矫正**。
+
+
 
 #### Graphics/Rendering Pipeline
 
