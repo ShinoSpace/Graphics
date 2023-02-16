@@ -398,6 +398,8 @@ n & 0 & 0 & 0 \\
 \end{pmatrix}
 $$
 
+变换后坐标的$w \neq 1$，**且$w$就等于变换前的$z$**，因此需要除以$w$，这一步称为齐次除法或透视除法。由于矩阵运算中数乘的顺序是任意的，因此可以放在所有变换后完成。
+
 ##### perspective projection
 
 将变为cuboid的视锥进行正交投影，就是完整的透视投影
@@ -471,9 +473,15 @@ $$
 
 （这里先缩放后平移，因此需要注意平移的offset）
 
-至此，变换结束
+#### Full Transformation
 
-$$ M = M_{vp}M_{ortho}M_{persp \rightarrow ortho}M_{view} $$
+透视除法放在最后做
+
+$$ \begin{gather}
+M = M_{vp}M_{ortho}M_{persp \rightarrow ortho}M_{view} \\ \\
+P_{screen} = \frac{1}{w}MP_{model}
+\end{gather}
+$$
 
 --------------------
 
@@ -750,11 +758,15 @@ $$L_s = k_s(I / r^2)\max (0, v\cdot r)^p$$
 <img src="E:/weapons/Graphics/src/games101/rendering/gouraud_shading.png" width="50%">
 </div>
 
-接下来要解决两个问题：1. 如何计算顶点的法向量？2. 如何插值？
+接下来要解决两个问题：1. 如何计算顶点的法向量？2. 如何在三角形内部插值计算颜色？
 
 #### Vertex Normal
 
-顶点法向计算非常朴素：顶点所在的所有三角形的法向取算数平均。更细致一点，可以计算各个三角形的贡献度（例如计算面积比例）作为权重进行加权平均。这种（加权）平均的方法现在仍然是广泛使用的
+- 为什么要计算顶点法向，实际的物理意义是什么？
+
+Flat shading问题很明显：1. 不同三角形间的颜色没有平缓过渡。2. 着色粒度粗导致几乎没有高光效果。第一个问题，需要综合考虑与顶点相连的所有三角形来计算顶点法向。第二个问题就需要点级别的着色来解决。
+
+顶点法向计算非常朴素：顶点所在的所有三角形的法向取平均。可以简单取算数平均，也可以为各三角形计算权重（例如计算面积比例）然后加权平均
 
 <div align=center>
 <img src="E:/weapons/Graphics/src/games101/rendering/vertex_normal.png" width="50%">
@@ -776,9 +788,24 @@ $$L_s = k_s(I / r^2)\max (0, v\cdot r)^p$$
 
 #### Perspective-Correct interpolation
 
-问题：真实的插值应该发生在实际三维场景下，但实际上面的插值都是将MVP+视口变换后的场景投影在屏幕空间后（simply drop $z$）再根据二维坐标计算插值系数（重心坐标）。三维和二维空间下的插值系数显然不相等，原因就是透视投影和透视除法。因此，需要对二维空间下的插值系数进行一次矫正，这就是**透视矫正**。
+问题：插值应该在三维场景下计算，然后对应到屏幕上的位置。但上面是在MVP+视口变换后，投影到2D屏幕平面上（simply drop $z$）计算插值系数。如果在观察视角下物体的深度发生了变化，透视投影的近大远小将导致真实物体和投影在2D屏幕平面上的形状不一致
 
+<div align=center>
+<img src="E:/weapons/Graphics/src/games101/rendering/perspective_correct_interp_problem.png" width="50%">
+</div>
 
+数学上，透视投影$M_{persp->ortho}$是一个非线性变换：$x, y$与变换前的物体深度$z$有关，深度$z$发生了非线性变化。这直接导致2D平面和3D空间下分别计算出的插值系数不同。因此，需要对2D平面下计算的重心坐标/插值系数进行一次矫正，矫正后的插值系数应与3D空间插值系数相等，这一步就是**透视矫正**。
+
+另一个问题：为什么不做逆变换，换到原始3D空间上的坐标再插值？这有两个原因：
+
+1. 对屏幕空间上的所有点进行逆变换，计算量大。
+2. 最主要、最根本的原因是：屏幕上我们只知道2D坐标$(x, y)$，无法直接对应找到物体的深度$z$（因为透视除法丢失了深度），因此透视除法就不可逆，所以实际上逆变换是无法进行的。
+
+总结第二个主要问题：我们只知道（三角形）顶点的三维坐标$(x, y, z)$（under model space，其他空间下的坐标可以通过变换获得）。屏幕空间中，除顶点外，只知道二维坐标$(x, y)$而无法在物体上找到对应的深度。因此需要找到一种方法，绕开求解未知点的深度。透视矫正插值寻找2D屏幕空间和真实3D空间插值系数的对应关系，避开了直接求解未知点的深度。确定插值系数后，可以计算未知点的深度值，曲线救国地对未知点进行了求解。
+
+推导和应用透视矫正插值的核心点在于：**确定插值对象在哪个空间**
+
+（adapt from [UCR CS130: perspective-correct-interpolation](./src/games101/rendering/perspective-correct-interpolation.pdf)）
 
 #### Graphics/Rendering Pipeline
 
