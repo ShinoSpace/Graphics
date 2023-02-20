@@ -84,7 +84,7 @@ $A$: 已知空间的基向量$u^\prime, v^\prime$在目标空间$u, v$下的坐�
 <img src="E:/weapons/Graphics/src/games101/rigid%20transform/rotation_angle.png" width="50%"  height="50%">
 </div>
 
-- Why is the rotation matrix $R_y(\alpha)$ around the y-axis different?
+- Why $R_y(\alpha)$ (rotate around the y-axis) is different?
 
   取决于旋转角方向的选取。
 
@@ -176,7 +176,7 @@ ModelView + Projection两种变换合称为MVP变换
 <img src="E:/weapons/Graphics/src/games101/MVP%20Transform/slam_coord_sys_transform.png" width="50%">
 </div>
 
-**我们需要一个中间坐标系$S^{\prime}$来处理平移**：$S^{\prime}$的原点与$D$重合，基向量与$S$共线且方向相同。需要这个中间系的原因是：只有当两个系的轴平行时，同一个向量在这两个系中的坐标才是相同的。用三角形法则处理平移，将点的坐标从$S$转到$S^{\prime}$下
+**我们需要一个中间坐标系$S^{\prime}$来处理平移**：$S^{\prime}$的原点与$D$重合，基向量与$S$共线且方向相同。需要这个中间系的原因是：只有当两个系的轴平行时，同一个**向量**在这两个系中的坐标才是相同的。用三角形法则处理平移，将点的坐标从$S$转到$S^{\prime}$下
 
 $$P_{S^{\prime}} = P_S + t$$
 
@@ -221,12 +221,9 @@ $$ P_{ref} = T_{rc}P_{cam}$$
 <img src="E:/weapons/Graphics/src/games101/MVP%20Transform/projection_range_[near,%20far].png" width="50%">
 </div>
 
-- 为什么没有drop $z$？
+- 为什么变换到$[-1, 1]^3$而没有直接drop $z$
 
-有两个主要原因：
-
-1. 次要原因：直观上，如果场景中只有一个物体，当然可以drop $z$完成投影，但实际场景不止一个物体，在相机视角下都会有遮挡关系。
-2. 主要原因：场景物体是连续的，屏幕是离散的，这两者间需要一步离散化的操作，这就是渲染中的光栅化，在下面一大章完成这件事
+实际场景可能不止一个物体，而且同一个物体也会有正反面，相机视角下存在遮挡关系（occlusion），用$z$确定物体的可见性（visibility. will discuss in next section）
 
 ##### 正交投影与透视投影的关系
 
@@ -316,7 +313,7 @@ x^{\prime} \\ y^{\prime} \\ z^{\prime} \\ 1
 nx/z \\ ny/z \\ unknown \\ 1
 \end{pmatrix} \overset{\times z}{==} \begin{pmatrix}
 nx \\ ny \\ still \hspace{3pt} unknown \\ z
-\end{pmatrix} \\ \\
+\end{pmatrix} \\[5pt]
 \begin{pmatrix}
 nx \\ ny \\ still \hspace{3pt} unknown \\ z
 \end{pmatrix}
@@ -348,14 +345,8 @@ $$
 
 注意两件事：
 
-- 变换的直接输出是$(nx, ny, ?, z)$，**最后一维$w$是输入点的深度$z$**
+- 变换的直接输出是$(nx, ny, ?, z)$，**最后一维$w$等于输入点的深度$z$**。这件事非常重要，在渲染中的插值将会用到
 - 变换矩阵的最后一行在计算上有无数组解：$(0, 0, 1, 0) \hspace{3pt}$or$\hspace{3pt} (0 ,0, k, (1-k)z), \hspace{2pt} k\in R$，后一组解与输入$z$有关，舍弃
-
-将系数放到输出有三个原因：
-
-- 计算方便：输入不用处理，输出直接用最后一维$w=z$归一化即可
-- 归一化操作不影响后续其他线性变换
-- 更high level的原因：透视除法。透视反映了近大远小的关系：$x \rightarrow nx / z \Rightarrow \Delta x \rightarrow n\Delta x / z$
 
 现在只差最后一步：找到映射关系$z \rightarrow z^{\prime}$，确定矩阵的第三行。将frustum变换为正交投影的cuboid是一种“挤压”的操作：
 
@@ -376,7 +367,7 @@ x \\ y \\ n \\ 1
 ? & ? & ? & ?
 \end{pmatrix} = \begin{pmatrix}
 0 & 0 & A & B
-\end{pmatrix} \\ \\
+\end{pmatrix} \\[5pt]
 An + B = n^2
 \end{cases} \\
 \begin{pmatrix}
@@ -398,7 +389,9 @@ n & 0 & 0 & 0 \\
 \end{pmatrix}
 $$
 
-变换后坐标的$w \neq 1$，**且$w$就等于变换前的$z$**，因此需要除以$w$，这一步称为齐次除法或透视除法。由于矩阵运算中数乘的顺序是任意的，因此可以放在所有变换后完成。
+变换后坐标的$w \neq 1$，**且$w$就等于变换前的$z$**，因此需要除以$w$，这一步称为齐次除法或透视除法，是「近大远小」这件事在数学上的描述。
+
+矩阵运算中数乘的顺序是任意的，透视除法可以放在所有变换后完成。
 
 ##### perspective projection
 
@@ -478,7 +471,7 @@ $$
 透视除法放在最后做
 
 $$ \begin{gather}
-M = M_{vp}M_{ortho}M_{persp \rightarrow ortho}M_{view} \\ \\
+M = M_{vp}M_{ortho}M_{persp \rightarrow ortho}M_{view} \\[5pt]
 P_{screen} = \frac{1}{w}MP_{model}
 \end{gather}
 $$
@@ -595,9 +588,11 @@ SSAA在效果上是最好的抗锯齿方法，代价就是$n^2$的计算复杂�
 
 为了将场景画在屏幕上，接下来还有两件事：1. 处理遮挡关系（可见性）2. 着色。z-buffer用于处理遮挡关系。
 
-相机视角下，三维场景中的物体由于在相机坐标系下的深度不同，可能会出现遮挡（occlusion）。z-buffer就是进行深度判断，确定渲染后物体在图像上的**可见性（visibility**）。
+相机视角下，三维场景中的物体由于深度不同，可能会出现遮挡（occlusion）。z-buffer直接利用MVP+视口变换后的深度$z$，判断渲染后物体在图像上的**可见性（visibility**）。
 
-算法本身非常朴素：遍历每个三角形，记录所有**采样点**的最小深度
+> z-buffer中的z就是指MVP+视口变换后的深度$z$。回忆透视投影中还有另外一个深度$w$，这是**透视投影前**的物体深度。用这个$w$做深度测试就称为w-buffer。
+
+算法本身非常简单直接：遍历每个三角形，记录所有**采样点**的最小深度
 
 <div align=center>
 <img src="E:/weapons/Graphics/src/games101/rendering/z-buffer.png" width="50%">
@@ -774,6 +769,10 @@ Flat shading问题很明显：1. 不同三角形间的颜色没有平缓过渡�
 
 #### Braycentric interpolation
 
+- 为什么需要插值？
+
+各顶点法向、颜色等属性不同，因此需要在三角形内部有一个平滑的过渡。
+
 在三角形内部插值的系数是**重心坐标（Braycentric coordinates）**。任意对象均可插值：color, normal, depth, material attributes, etc.
 
 <div align=center>
@@ -788,24 +787,143 @@ Flat shading问题很明显：1. 不同三角形间的颜色没有平缓过渡�
 
 #### Perspective-Correct interpolation
 
-问题：插值应该在三维场景下计算，然后对应到屏幕上的位置。但上面是在MVP+视口变换后，投影到2D屏幕平面上（simply drop $z$）计算插值系数。如果在观察视角下物体的深度发生了变化，透视投影的近大远小将导致真实物体和投影在2D屏幕平面上的形状不一致
+问题：插值应该在三维场景下计算，然后对应到屏幕上的位置，但上面的插值计算是在二维屏幕/投影平面上进行。在相机视角下，只要物体的深度$z$不恒定，透视投影就会导致形状改变，插值系数就会出现偏差
 
 <div align=center>
 <img src="E:/weapons/Graphics/src/games101/rendering/perspective_correct_interp_problem.png" width="50%">
 </div>
 
-数学上，透视投影$M_{persp->ortho}$是一个非线性变换：$x, y$与变换前的物体深度$z$有关，深度$z$发生了非线性变化。这直接导致2D平面和3D空间下分别计算出的插值系数不同。因此，需要对2D平面下计算的重心坐标/插值系数进行一次矫正，矫正后的插值系数应与3D空间插值系数相等，这一步就是**透视矫正**。
+数学上，透视投影$M_{persp->ortho}$是一个非线性变换：$x, y$与变换前的物体深度$z$有关，并且深度$z$发生了非线性变化。这导致二维屏幕空间和三维场景空间下计算出的插值系数不相等。因此，在二维屏幕空间下计算重心坐标/插值系数后需要再进行一次矫正，恢复三维场景空间中的真实插值系数，这一步就是**透视矫正**。
 
-另一个问题：为什么不做逆变换，换到原始3D空间上的坐标再插值？这有两个原因：
+另一个问题：为什么不做逆变换，直接换到三维空间上的坐标再插值？这有两个原因：
 
-1. 对屏幕空间上的所有点进行逆变换，计算量大。
-2. 最主要、最根本的原因是：屏幕上我们只知道2D坐标$(x, y)$，无法直接对应找到物体的深度$z$（因为透视除法丢失了深度），因此透视除法就不可逆，所以实际上逆变换是无法进行的。
+1. 次要原因：对屏幕空间上的所有点进行逆变换，计算量大。另外，这个理由禁不起推敲，因为无法做逆变换（see next for detail reason）
+2. 根本原因：除三角形顶点外，我们无法直接求出二维屏幕上的任一点$(x, y)$在三维场景中的深度$z$，因此无法进行逆变换。也正是由于这一点，我们在MVP + 视口变换后始终回避$z$方向上的建模（除了z-buffer和w-buffer，这两者是在MVP的正向变换路径上建模）
 
-总结第二个主要问题：我们只知道（三角形）顶点的三维坐标$(x, y, z)$（under model space，其他空间下的坐标可以通过变换获得）。屏幕空间中，除顶点外，只知道二维坐标$(x, y)$而无法在物体上找到对应的深度。因此需要找到一种方法，绕开求解未知点的深度。透视矫正插值寻找2D屏幕空间和真实3D空间插值系数的对应关系，避开了直接求解未知点的深度。确定插值系数后，可以计算未知点的深度值，曲线救国地对未知点进行了求解。
+总结第二个主要问题：在三维场景空间中，我们只知道（三角形）顶点坐标$(x, y, z)$（under model space，其他空间下的坐标可以通过变换获得）。在二维屏幕空间中，除顶点外，我们无法直接确定任意点$(x, y)$对应的深度。因此需要找到一种方法，绕开深度的直接求解。透视矫正插值寻找二维屏幕空间和三维场景空间插值系数的对应关系，先避开直接求解未知点的深度。在确定插值系数后，就可以通过插值计算未知点的深度值，曲线救国地对未知点进行了求解。可以证明，只要几何面是平面（透视投影前），插值法计算出的深度就是真实深度。
 
-推导和应用透视矫正插值的核心点在于：**确定插值对象在哪个空间**
+推导和应用透视矫正插值的核心点：1. **确定插值对象在哪个空间** 2. 明确坐标在哪个空间 3. 用约束条件检查正确性
 
 （adapt from [UCR CS130: perspective-correct-interpolation](./src/games101/rendering/perspective-correct-interpolation.pdf)）
+
+带上标的符号（$*^{\prime}$）表示二维屏幕空间中的value，不带上标的符号（$*$）表示投影变换前的三维场景空间中的value
+
+Assume：
+
+- 二维屏幕空间下，插值系数（重心坐标）$\alpha^{\prime}, \beta^{\prime}, \gamma^{\prime}, \hspace{2pt} \alpha^{\prime} + \beta^{\prime} + \gamma^{\prime} = 1$，三角形顶点$A^{\prime}, B^{\prime}, C^{\prime} \in R^2$，待求解插值点$P^{\prime} \in R^2$
+- 三维场景空间下，插值系数（重心坐标）$\alpha, \beta, \gamma, \hspace{2pt} \alpha + \beta + \gamma = 1$，三角形顶点$A, B, C \in R^3$，待求解插值点$P \in R^3$
+
+注意，这里所有的点都用非齐次坐标表示
+
+三维场景空间下的$\alpha, \beta, \gamma$是真实的插值系数，目标是寻找二维屏幕空间下的插值系数$\alpha^{\prime}, \beta^{\prime}, \gamma^{\prime}$与$\alpha, \beta, \gamma$的关系。两个空间下的插值方程：
+
+$$ \begin{gather}
+P^{\prime} = \alpha^{\prime} A^{\prime} + \beta^{\prime} B^{\prime} + \gamma^{\prime} C^{\prime} \\[5pt]
+P = \alpha A + \beta B + \gamma C
+\end{gather}
+$$
+
+对上式应用MVP变换，但不包含透视除法。注意，所有点都用非齐次坐标表示，MVP时需要显式转换为齐次坐标
+
+$$ M \begin{pmatrix}
+P \\ 1
+\end{pmatrix} = \alpha M \begin{pmatrix}
+A \\ 1
+\end{pmatrix} + \beta M \begin{pmatrix}
+B \\ 1
+\end{pmatrix} + \gamma M \begin{pmatrix}
+C \\ 1
+\end{pmatrix}
+$$
+
+这种表示促使我们将上式更细粒度地展开
+
+$$ \begin{gather}
+\begin{pmatrix}
+x_P^{\prime} w_P \\ y_P^{\prime} w_P \\ z_P^{\prime} w_P \\ w_P
+\end{pmatrix} = \alpha \begin{pmatrix}
+x_P^{\prime} w_A \\ y_P^{\prime} w_A \\ z_P^{\prime} w_A \\ w_A
+\end{pmatrix} + \beta \begin{pmatrix}
+x_P^{\prime} w_B \\ y_P^{\prime} w_B \\ z_P^{\prime} w_B \\ w_B
+\end{pmatrix} + \gamma \begin{pmatrix}
+x_P^{\prime} w_C \\ y_P^{\prime} w_C \\ z_P^{\prime} w_C \\ w_C
+\end{pmatrix} \\[5pt]
+w_* = z_*
+\end{gather}
+$$
+
+回顾透视投影，再次强调$w_* = z_*$的物理意义：**透视投影后的$w$等于投影前的深度$z$**。从上式中拆解出$x, y$维度和$w$维度，就能找到二维屏幕空间和三维场景空间下插值系数的关系
+
+$$ \begin{gather}
+w_P \begin{pmatrix}
+x_P^{\prime} \\ y_P^{\prime}
+\end{pmatrix} = \alpha w_A \begin{pmatrix}
+x_P^{\prime} \\ y_P^{\prime}
+\end{pmatrix} + \beta w_B \begin{pmatrix}
+x_P^{\prime} \\ y_P^{\prime}
+\end{pmatrix} + \gamma w_C \begin{pmatrix}
+x_P^{\prime} \\ y_P^{\prime}
+\end{pmatrix} \tag{PCI-1} \\[5pt]
+w_P = \alpha w_A + \beta w_b + \gamma w_c \tag{PCI-2} \\[5pt]
+\begin{pmatrix}
+x_P^{\prime} \\ y_P^{\prime}
+\end{pmatrix} = \alpha^{\prime} \begin{pmatrix}
+x_P^{\prime} \\ y_P^{\prime}
+\end{pmatrix} + \beta^{\prime} \begin{pmatrix}
+x_P^{\prime} \\ y_P^{\prime}
+\end{pmatrix} + \gamma^{\prime} \begin{pmatrix}
+x_P^{\prime} \\ y_P^{\prime}
+\end{pmatrix} \tag{PCI-3}
+\end{gather}
+$$
+
+$(\mathrm{PCI} \text{-} 2)$带入$(\mathrm{PCI} \text{-} 1)$，与$(\mathrm{PCI} \text{-} 3)$对比即得矫正关系
+
+$$ \begin{gather}
+\alpha^{\prime} = \frac{\alpha w_A}{\alpha w_A + \beta w_b + \gamma w_c} \\[2ex]
+\beta^{\prime} = \frac{\beta w_B}{\alpha w_A + \beta w_b + \gamma w_c} \\[2ex]
+\gamma^{\prime} = \frac{\gamma w_C}{\alpha w_A + \beta w_b + \gamma w_c}
+\end{gather}
+$$
+
+这个关系是正确的，满足约束条件$\alpha^{\prime} + \beta^{\prime} + \gamma^{\prime} = 1$。最终目标是将$\alpha^{\prime}, \beta^{\prime}, \gamma^{\prime}$的值修正为$\alpha, \beta, \gamma$。利用约束关系$\alpha + \beta + \gamma = 1$反解上式
+
+$$ \begin{gather}
+\alpha = \frac{\alpha^{\prime} w_P}{w_A}, \beta = \frac{\beta^{\prime} w_P}{w_B}, \gamma = \frac{\gamma^{\prime} w_P}{w_C} \\[5pt]
+\alpha + \beta + \gamma = 1 \Rightarrow \frac{1}{w_P} = \frac{\alpha^{\prime}}{w_A} + \frac{\beta^{\prime}}{w_B} + \frac{\gamma^{\prime}}{w_C} \tag{D-interp} \\[5px]
+\alpha = \frac{\alpha^{\prime} / w_A}{\alpha^{\prime} / w_A + \beta^{\prime} / w_B + \gamma^{\prime} / w_C}, \hspace{5px}
+\beta = \frac{\beta^{\prime} / w_B}{\alpha^{\prime} / w_A + \beta^{\prime} / w_B + \gamma^{\prime} / w_C}, \hspace{5px}
+\gamma = \frac{\gamma^{\prime} / w_C}{\alpha^{\prime} / w_A + \beta^{\prime} / w_B + \gamma^{\prime} / w_C} \tag{PCI}
+\end{gather}
+$$
+
+$(\mathrm{PCI})$式将二维屏幕空间下的插值系数矫正为三维场景空间下的真实插值系数。$(\mathrm{D} \text{-} \mathrm{interp})$式曲线救国地解出了$P^{\prime}$在三维场景空间中对应点的真实深度，该式被称为**深度插值**。二位屏幕平面上任意一点对应的属性（e.g. normal, depth, texture, etc.）就可以通过重心坐标插值得到。
+
+- $(\mathrm{PCI} \text{-} 2)$和$(\mathrm{D} \text{-} \mathrm{interp})$插值求解真实深度$z$的正确性？
+
+3D空间中的几何面方程是关于$x, y, z$的affine equation，这保证了插值是正确的。
+
+proof. 设三角形所在平面方程为$Ax + By + Cz + D = 0$（注意这里$A, B, C, D \in R$，不是三角形顶点）。三角形顶点坐标为$(x_i, y_i), \hspace{2px} i = 1, 2, 3$。目标是检查在三维空间插值后的$P$点是否落在三角形所在平面上。如果$P$仍在平面上，则说明深度插值得到的就是真实深度
+
+$$ \begin{gather}
+\begin{pmatrix}
+x \\ y \\ z
+\end{pmatrix} = \alpha \begin{pmatrix}
+x_1 \\ y_1 \\ z_1
+\end{pmatrix} + \beta \begin{pmatrix}
+x_2 \\ y_2 \\ z_2
+\end{pmatrix} + \gamma \begin{pmatrix}
+x_3 \\ y_3 \\ z_3
+\end{pmatrix} \\[2ex]
+A(\alpha x_1 + \beta x_2 + \gamma x_3) + B(\alpha y_1 + \beta y_2 + \gamma y_3) + C(\alpha z_1 + \beta z_2 + \gamma z_3) + D \overset{?}{=} 0
+\end{gather}
+$$
+
+考虑到有方程$Ax_i + By_i + Cz_i + D = 0$，对第二个方程按该模式重排
+
+$$\alpha(Ax_1 + By_1 + Cz_1) + \beta(Ax_2 + By_2 + Cz_2) + \gamma (Ax_3 + By_3 + Cz_3) + D = -D(\alpha + \beta + \gamma) + D \equiv 0$$
+
+这里再次用了约束条件$\alpha + \beta + \gamma = 1$。因此插值后的$P$点就在平面上。这证明对于任意几何**平面**，都能通过方程$(\mathrm{PCI} \text{-} 2)$和$(\mathrm{D} \text{-} \mathrm{interp})$进行插值，得到正确的深度解。Q.E.D.
 
 #### Graphics/Rendering Pipeline
 
