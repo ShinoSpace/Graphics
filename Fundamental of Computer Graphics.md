@@ -102,7 +102,7 @@ $A$: 已知空间的基向量$u^\prime, v^\prime$在目标空间$u, v$下的坐�
 proof:
 
 <div align=center>
-<img src="E:/weapons/Graphics/src/games101/rigid%20transform/Rodrigues_rotation_proof_0.png" width="28%"> <img src="E:/weapons/Graphics/src/games101/rigid%20transform/Rodrigues_rotation_proof_1.png" width="32.6%"> <img src="E:/weapons/Graphics/src/games101/rigid%20transform/Rodrigues_rotation_proof_2.png" width="36%">
+<img src="E:/weapons/Graphics/src/games101/rigid%20transform/Rodrigues_rotation_proof_0.png" width="28%"><img src="E:/weapons/Graphics/src/games101/rigid%20transform/Rodrigues_rotation_proof_1.png" width="32.6%"><img src="E:/weapons/Graphics/src/games101/rigid%20transform/Rodrigues_rotation_proof_2.png" width="36%">
 </div>
 
 Assume:
@@ -782,7 +782,7 @@ Flat shading问题很明显：1. 不同三角形间的颜色没有平缓过渡�
 插值系数$\alpha, \beta, \gamma$的计算有两种方法：求面积（外积）或直接用坐标硬算
 
 <div align=center>
-<img src="E:/weapons/Graphics/src/games101/rendering/braycentric_coord_area_compute.png" width="30%"> <img src="E:/weapons/Graphics/src/games101/rendering/braycentric_coord_direct_compute.png" width="30%">
+<img src="E:/weapons/Graphics/src/games101/rendering/braycentric_coord_area_compute.png" width="30%"><img src="E:/weapons/Graphics/src/games101/rendering/braycentric_coord_direct_compute.png" width="30%">
 </div>
 
 #### Perspective-Correct interpolation
@@ -927,3 +927,58 @@ $$\alpha(Ax_1 + By_1 + Cz_1) + \beta(Ax_2 + By_2 + Cz_2) + \gamma (Ax_3 + By_3 +
 
 #### Graphics/Rendering Pipeline
 
+<div align=center>
+<img src="E:/weapons/Graphics/src/games101/rendering/rendering_pipeline.png" width="50%">
+</div>
+
+着色频率决定渲染管线上各阶段shader的功能：Gouraud shading在vertex shader（顶点着色器）中进行，Phong shading在fragment/pixel shader中进行
+
+<div align=center>
+<img src="E:/weapons/Graphics/src/games101/rendering/rendering_pipeline_shading_freq.png" width="50%">
+</div>
+
+#### Texture Mapping
+
+纹理表现为颜色的变化/分布，建模在漫反射系数$k_d$上。物体表面的纹理可以展开为一张二维空间下的纹理图，$u, v$表示这个空间的基向量。类似pixel，纹理图上的纹理单元称为texel（纹素）。纹理映射$\phi: (x, y, z) \rightarrow (u, v)$将三维空间中的位置映射到纹理空间上
+
+<div align=center>
+<img src="E:/weapons/Graphics/src/games101/rendering/texture_mapping_diffuse_albedo.png" width="30%"> <img src="E:/weapons/Graphics/src/games101/rendering/texture_mapping_function.png" width="30%">
+</div>
+
+纹理映射的建立方式：
+
+- projector：简单几何体采用投影的方法
+- uv mapping：建模师在构建原型时建立，直接存储在几何信息内
+
+无论如何，目前认为$\phi$是已知的。因此应用纹理就是根据$\phi$在$uv$上查找纹理信息的过程
+
+<div align=center>
+<img src="E:/weapons/Graphics/src/games101/rendering/texture_mapping.png" width="50%">
+</div>
+
+##### Magnification
+
+纹理分辨率过小，屏幕分辨率大，一个pixel映射到纹理图上就小于一个texel，做纹理贴图时就需要对纹理上采样，插值即可
+
+##### Minification
+
+纹理分辨率大，屏幕分辨率小，一个pixel square映射到纹理图上就会覆盖若干个texel
+
+<div align=center>
+<img src="E:/weapons/Graphics/src/games101/rendering/pixel_footprint_in_texture.png" width="30%"><img src="E:/weapons/Graphics/src/games101/rendering/texture_point_range_query.png" width="30%"><br>
+图中蓝色点是pixel center映射到纹理图上的位置，黑色边界框出了一个pixel square在纹理图上的范围
+</div>
+
+这里出现了point query和range query两个概念：point query是直接查询给定点的值，Magnification就是point query。range query是查询给定区域对应的值（例如平均值）。
+
+显然，如果pixel square在纹理图上覆盖的区域较大，只做插值的话就会出现采样不足（欠采样）$\rightarrow$ aliasing！最简单有效的方法自然是SSAA做反走样，效果确实好，计算代价也确实高
+
+<div align=center>
+<img src="E:/weapons/Graphics/src/games101/rendering/texture_aliasing.png" width="30%"><img src="E:/weapons/Graphics/src/games101/rendering/texture_SSAA.png" width="30%">
+</div>
+
+类似于MSAA对SSAA的优化，可以在range query范围内做平均。pixel square map到纹理图的覆盖区域形状可能不规则，导致计算效率不高，因此需要加速。
+
+##### Mipmap
+
+Mipmap是一种通过近似对range query加速的方法。在计算机视觉领域，Mipmap就是熟知的Image/Feature Pyramid（just a alias）
