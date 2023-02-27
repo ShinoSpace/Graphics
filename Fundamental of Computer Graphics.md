@@ -977,8 +977,28 @@ $$\alpha(Ax_1 + By_1 + Cz_1) + \beta(Ax_2 + By_2 + Cz_2) + \gamma (Ax_3 + By_3 +
 <img src="E:/weapons/Graphics/src/games101/rendering/texture_aliasing.png" width="30%"><img src="E:/weapons/Graphics/src/games101/rendering/texture_SSAA.png" width="30%">
 </div>
 
-类似于MSAA对SSAA的优化，可以在range query范围内做平均。pixel square map到纹理图的覆盖区域形状可能不规则，导致计算效率不高，因此需要加速。
+类似于MSAA对SSAA的优化，可以在range query范围内做平均。由于$\phi$的一般性（大概率是个非线性变换），不同的pixel square映射到纹理图的覆盖区域大小和形状多变，导致计算效率不高，因此需要加速。
 
 ##### Mipmap
 
-Mipmap是一种通过近似对range query加速的方法。在计算机视觉领域，Mipmap就是熟知的Image/Feature Pyramid（just a alias）
+> In Computer Vision，the alias of Mipmap is Image/Feature Pyramid
+
+Mipmap是一种加速range query的方法，核心是近似。覆盖区域大小变化的问题用金字塔解决，形状变化的问题就简单用正方形近似
+
+<div align=center>
+<img src="E:/weapons/Graphics/src/games101/rendering/mipmap_pyramid.png" width="30%"><img src="E:/weapons/Graphics/src/games101/rendering/mipmap_range_compute.png" width="30%"><img src="E:/weapons/Graphics/src/games101/rendering/mipmap_square_approximate.png" width="30%"><br>
+左：构建金字塔。中：相邻pixel映射到纹理图上，计算距离并确定对应的金字塔层级。右：用正方形近似
+</div>
+
+距离的计算公式虽然出现了导数，但实现中只需将相邻pixel映射到纹理图上，然后直接求距离即可。
+
+在Mipmap的第$L$层（$L$从0开始），range query的范围对应一个texel，因此查询$L$层$(u / 2^L, v / 2^L)$位置的值即可。现实中，计算出来的$L$很难是整数，因此在$Nearest(L)$和$Nearest(L) + 1$层分别做bilinear interpolation，然后再做一次线性插值，就可以获得一个平滑的结果。
+
+<div align=center>
+<img src="E:/weapons/Graphics/src/games101/rendering/mipmap_nearest_level.png" width="30%"><img src="E:/weapons/Graphics/src/games101/rendering/mipmap_trilinear.png" width="30%"><img src="E:/weapons/Graphics/src/games101/rendering/mipmap_level_smooth.png" width="30%">
+</div>
+
+> 整个计算过程就类似于2D object detection w/ FPN的分治策略
+
+##### Shape variance
+
