@@ -966,7 +966,7 @@ $$\alpha(Ax_1 + By_1 + Cz_1) + \beta(Ax_2 + By_2 + Cz_2) + \gamma (Ax_3 + By_3 +
 
 <div align=center>
 <img src="E:/weapons/Graphics/src/games101/rendering/pixel_footprint_in_texture.png" width="30%"><img src="E:/weapons/Graphics/src/games101/rendering/texture_point_range_query.png" width="30%"><br>
-图中蓝色点是pixel center映射到纹理图上的位置，黑色边界框出了一个pixel square在纹理图上的范围
+图中蓝色点是pixel center映射到纹理图上的位置，黑色边界框出了一个pixel square映射到纹理图上的覆盖范围
 </div>
 
 这里出现了point query和range query两个概念：point query是直接查询给定点的值，Magnification就是point query。range query是查询给定区域对应的值（例如平均值）。
@@ -1001,4 +1001,29 @@ Mipmap是一种加速range query的方法，核心是近似。覆盖区域大小
 > 整个计算过程就类似于2D object detection w/ FPN的分治策略
 
 ##### Shape variance
+
+Mipmap用金字塔近似解决了多尺度问题，但仍未解决非线性的$\phi$带来的形状扭曲。Mipmap将覆盖范围近似为正方形，这与真实覆盖范围不一致，求平均后导致了纹理模糊
+
+<div align=center>
+<img src="E:/weapons/Graphics/src/games101/rendering/texture_map_shape_variance.png" width="30%"><img src="E:/weapons/Graphics/src/games101/rendering/mipmap_blur.png" width="30%">
+</div>
+
+与CV一样，除了最直观的轮廓变化，还可从若干角度考虑形变这件事，例如：长宽比、旋转角度、顶点数固定的多边形覆盖，等等
+
+> 在CV领域，Deformable Conv和Deformable attention是常用的自适应形变的方法。缺点就是开销较大
+
+各向异性过滤（**Anisotropic Filtering**，也称为**Ripmap**）在长宽比上做多尺度建模来缓解形变问题
+
+<div align=center>
+<img src="E:/weapons/Graphics/src/games101/rendering/ripmap.png" width="50%"><br>
+Mipmap是右上图中的对角线路径，保持长宽比不变。Ripmap建立金字塔矩阵，能够适应H和W方向上的（axis-aligned）形变
+</div>
+
+更复杂的有椭圆加权平均（Elliptically Weighted Average, EWA）滤波。这个方法在纹理滤波中被认为是最好的方法之一
+
+<div align=center>
+<img src="E:/weapons/Graphics/src/games101/rendering/EWA_filtering.png" width="50%">
+</div>
+
+这部分可以参考pbrt和文章 https://zhuanlan.zhihu.com/p/105167411
 
