@@ -6,49 +6,9 @@
 
 --------------------
 
-### 数学基础：理解线性变换的几何意义
-
-> 改编自3Blue1Brown系列视频：线性代数的本质
-
-- 线性变换：$\vec{y} = A \vec{x}$
-- 应用：点或向量的坐标变换，换系
-- 核心：基变换
-
-#### 坐标变换的本质是基变换
-
-- 基向量完备地描述了向量空间
-- 变换基向量 $\Leftrightarrow$ 对空间内所有点/向量进行变换
-
-以笛卡尔坐标系下的旋转变换为例
-
-原始基向量为$u=(1,0)$, $v=(0,1)$。给定任意向量$x$，将向量和空间视作一个整体。将空间（基向量）顺时针旋转$\theta$角（记旋转后的空间的基向量为$u^\prime, v^\prime$），$x$也就旋转了同样的角度（旋转后的向量记为$y$）。旋转过程中，向量与空间并未发生相对运动，因此，$x$和$y$在旋转前后的两个空间内，**坐标保持不变**。
-
-求旋转后的向量在原空间$u, v$下的坐标，只需要知道旋转后的空间的基向量$u^\prime, v^\prime$在原空间下的坐标即可。由于$x$和$y$在原空间和旋转空间下的坐标相同，因此直接线性组合即得所求
-
-$$ y = \begin{pmatrix}
-u^\prime, v^\prime
-\end{pmatrix} x = Ax $$
-
-#### 换系是线性变换本质的直接应用
-
-- 换系就是在换基
-
-给定任意向量$x$，已知其在原空间$u^\prime, v^\prime$下的坐标，求$x$在目标空间$u, v$下的坐标。只要求得原空间的基$u^\prime, v^\prime$在目标空间$u, v$下的坐标，直接线性组合即得所求。
-
-#### 线性变换矩阵A的几何意义
-
-明确两个空间
-
-- 目标空间：求向量 or 点在这个空间下的坐标
-- 已知空间：向量 or 点在这个空间下的坐标已知或容易求解
-
-$A$: 已知空间的基向量$u^\prime, v^\prime$在目标空间$u, v$下的坐标，即$A=(u^\prime, v^\prime)$
-
---------------------
-
 ### Transformation and Homogeneous coordinate
 
-- prerequisite: [线性变换的几何意义](#数学基础理解线性变换的几何意义)，根据线性变换的本质快速确定变换矩阵
+- prerequisite: [Geometry of Linear Transformation](./Fundamental%20Calculus%20and%20Linear%20Algebra.md)，根据线性变换的本质快速确定变换矩阵
 
 #### 齐次坐标（Homogeneous coordinate）
 
@@ -956,11 +916,9 @@ $$\alpha(Ax_1 + By_1 + Cz_1) + \beta(Ax_2 + By_2 + Cz_2) + \gamma (Ax_3 + By_3 +
 <img src="E:/weapons/Graphics/src/games101/rendering/texture_mapping.png" width="50%">
 </div>
 
-##### Magnification
+##### Magnification and Minification
 
 纹理分辨率过小，屏幕分辨率大，一个pixel映射到纹理图上就小于一个texel，做纹理贴图时就需要对纹理上采样，插值即可
-
-##### Minification
 
 纹理分辨率大，屏幕分辨率小，一个pixel square映射到纹理图上就会覆盖若干个texel
 
@@ -969,7 +927,7 @@ $$\alpha(Ax_1 + By_1 + Cz_1) + \beta(Ax_2 + By_2 + Cz_2) + \gamma (Ax_3 + By_3 +
 图中蓝色点是pixel center映射到纹理图上的位置，黑色边界框出了一个pixel square映射到纹理图上的覆盖范围
 </div>
 
-这里出现了point query和range query两个概念：point query是直接查询给定点的值，Magnification就是point query。range query是查询给定区域对应的值（例如平均值）。
+> 这里出现了point query和range query两个概念：point query是直接查询给定点的值，Magnification就是point query。range query是查询给定区域对应的值（例如平均值）。
 
 显然，如果pixel square在纹理图上覆盖的区域较大，只做插值的话就会出现采样不足（欠采样）$\rightarrow$ aliasing！最简单有效的方法自然是SSAA做反走样，效果确实好，计算代价也确实高
 
