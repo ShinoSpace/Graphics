@@ -1,4 +1,4 @@
-### 参考资料
+## 参考资料
 
 - Mathematics: 线性代数，3Blue1Brown (3B1B)
 - Course: GAMES101
@@ -6,11 +6,11 @@
 
 --------------------
 
-### Transformation and Homogeneous coordinate
+## Transformation and Homogeneous coordinate
 
 - prerequisite: [Geometry of Linear Transformation](./Fundamental%20Calculus%20and%20Linear%20Algebra.md)，根据线性变换的本质快速确定变换矩阵
 
-#### 齐次坐标（Homogeneous coordinate）
+### Homogeneous coordinate
 
 - 为什么引入齐次坐标？
 
@@ -38,7 +38,7 @@
 
   在扩充定义下，两个点的和为$(x_1, y_1, 1) + (x_2, y_2, 1) = (\frac{x_1+x_2}{2}, \frac{y_1+y_2}{2}, 1)$，几何上表示这两个点的中点坐标。
 
-#### 旋转方向的选取对旋转矩阵的影响
+### 旋转方向的选取对旋转矩阵的影响
 
 <div align=center>
 <img src="E:/weapons/Graphics/src/games101/rigid%20transform/rotation_angle.png" width="50%"  height="50%">
@@ -52,7 +52,7 @@
 
   这里的$R_y(\alpha)$，旋转角是从$z$到$x$的。**该方向符合右手螺旋法则，一般将其定义为旋转的正方向**。
 
-#### 绕过原点的任意轴旋转：罗德里格斯公式
+### 绕过原点的任意轴旋转：罗德里格斯公式
 
 证明思路有两种：
 
@@ -79,7 +79,7 @@ Assume:
 
 --------------------
 
-### Viewing Transformation
+## Viewing Transformation
 
 - View/Camera/ModelView Transformation: 物体和相机同时运动（不发生相对运动）
   - 与换系区分：物体不动，换到另一个坐标系，观测者（相机）与物体发生了相对运动
@@ -136,7 +136,7 @@ ModelView + Projection两种变换合称为MVP变换
 <img src="E:/weapons/Graphics/src/games101/MVP%20Transform/slam_coord_sys_transform.png" width="50%">
 </div>
 
-**我们需要一个中间坐标系$S^{\prime}$来处理平移**：$S^{\prime}$的原点与$D$重合，基向量与$S$共线且方向相同。需要这个中间系的原因是：只有当两个系的轴平行时，同一个**向量**在这两个系中的坐标才是相同的。用三角形法则处理平移，将点的坐标从$S$转到$S^{\prime}$下
+**我们需要一个中间坐标系$S^{\prime}$来处理平移**：$S^{\prime}$与$D$的原点重合，基向量与$S$相同。需要这个中间系的原因是：只有当两个系的轴平行时，同一个**向量**在这两个系中的坐标才是相同的。用三角形法则处理平移，将点的坐标从$S$转到$S^{\prime}$下
 
 $$P_{S^{\prime}} = P_S + t$$
 
@@ -428,7 +428,7 @@ $$
 
 #### Full Transformation
 
-透视除法放在最后做
+透视除法可以放在最后
 
 $$ \begin{gather}
 M = M_{vp}M_{ortho}M_{persp \rightarrow ortho}M_{view} \\[5pt]
@@ -438,11 +438,11 @@ $$
 
 --------------------
 
-### Rendering
+## Rendering
 
 MVP + 视口变换将空间中的物体（model in a frustum or cuboid）变到了$x \in [0, width] \times y \in [0, height] \times z \in [-1, 1]$的范围内。接下来就是要把东西画在屏幕上，这就是**渲染（Rendering）**
 
-### Rasterization
+## Rasterization
 
 场景物体表面可以分解为若干多边形，图形学使用三角形作为最基本的多边形
 
@@ -454,7 +454,7 @@ MVP + 视口变换将空间中的物体（model in a frustum or cuboid）变到�
 
 光栅化（Rasterization）阶段**计算多边形对像素点的覆盖**，不考虑着色问题
 
-#### Rasterization as 2D sampling
+### Rasterization as 2D sampling
 
 1. 判断给定点在三角形内部 or 外部
 
@@ -497,7 +497,7 @@ $$ z = (x_1 y_2 - x_2 y_1) \vec{k} $$
 <img src="E:/weapons/Graphics/src/games101/rendering/aliasing_example_0.png" width="30%"> <img src="E:/weapons/Graphics/src/games101/rendering/aliasing_example_1.png" width="30%">
 </div>
 
-#### Antialiasing
+### Antialiasing
 
 1. 走样的原因
 
@@ -534,7 +534,7 @@ SSAA在效果上是最好的抗锯齿方法，代价就是$n^2$的计算复杂�
 
 理论上，MSAA的resolve实际是在连续的三角形上做均值滤波，卷积核大小等于一个pixel square的大小。卷积中的积分运算并未使用解析解，而是用离散采样求和的方式实现。
 
-#### 图形学与机器学习中的积分：闭式解，上下界以及离散求和近似
+### 图形学与机器学习中的积分：闭式解，上下界以及离散求和近似
 
 机器学习中，如果在数学建模或优化目标中出现了积分式，倾向于利用数学方法求出其闭式解或寻找上下界，以便于进行优化，例如GAN的理论求解。
 
@@ -542,7 +542,7 @@ SSAA在效果上是最好的抗锯齿方法，代价就是$n^2$的计算复杂�
 
 解析求解与采样并无绝对意义上的优劣，二者并不矛盾。闭式解难求时就用采样求和进行数值近似，闭式解可求时就考虑显式优化。
 
-#### z-buffer (深度缓冲、深度测试)
+### z-buffer (深度缓冲、深度测试)
 
 梳理一下光栅化过程：MVP+视口变换得到$x \in [0, width] \times y \in [0, height] \times z\in [-1, 1]$的立方体 -> 屏幕空间像素采样 + 反走样的超采样部分 -> 判断pixel center是否inside triangle，确定像素覆盖。
 
@@ -558,7 +558,7 @@ SSAA在效果上是最好的抗锯齿方法，代价就是$n^2$的计算复杂�
 <img src="E:/weapons/Graphics/src/games101/rendering/z-buffer.png" width="50%">
 </div>
 
-### Shading
+## Shading
 
 光栅化完成后，我们确定了场景内物体对屏幕上像素的覆盖关系，做了抗锯齿，也处理了相机视角下物体的遮挡关系（可见性）。接下来将物体颜色直接分配给对应的像素似乎就完成了渲染。但除了颜色，明暗的不同也会影响物体颜色的观测结果。所以要同时引入物体颜色、明暗等因素构建数学模型来描述着色过程。
 
@@ -566,7 +566,7 @@ SSAA在效果上是最好的抗锯齿方法，代价就是$n^2$的计算复杂�
 
 着色需要三部分信息：1. 场景内物体的几何表示，包括三角形或多边形的顶点、法线。2. 光照/着色模型。3. 着色频率。在**图形学/渲染管线（Graphics/Rendering Pipeline）中**，这三部分（特别是着色频率）决定了各着色器（shader）的运行方式。
 
-#### Shading is local
+### Shading is local
 
 着色模型只考虑着色点附近的很小的一块区域，因此这个范围内的物体表面（Surface）可以视为一个平面。与之相对的，对物体在地面上的阴影着色就由non-local的模型负责。
 
@@ -578,7 +578,7 @@ SSAA在效果上是最好的抗锯齿方法，代价就是$n^2$的计算复杂�
 > 
 > 理解why model is local的时候，举出non-local的例子，对理解会有很大帮助。
 
-#### Shading input
+### Shading input
 
 着色的建模过程集中在着色点（shading point）上，在着色点附近的极小范围内的物体表面可视为平面。建立光照模型需要：
 
@@ -596,7 +596,7 @@ $n, l, v$均为单位向量
 > 颜色：表面对不同波长 or 频率的光的吸收率，是$\lambda$ or $f$的函数
 > 光泽度（gloss/shininess）：表面在镜面反射方向上的反射能力
 
-#### Blinn-Phong Reflectance Model
+### Blinn-Phong Reflectance Model
 
 直观感受上，一个真实场景成像的光照主要分为三部分
 
@@ -610,7 +610,7 @@ $n, l, v$均为单位向量
 
 Blinn-Phong是基础的光线反射模型，主要建模镜面高光和漫反射，最复杂的环境光部分用常系数简单处理，最终的模型是这三部分的简单求和。
 
-##### Point light
+#### Point light
 
 一般将光源视为点光源，光的传播面是一个球面，球面上光强均匀分布。光源功率一定，在球面上的能量（光强在球上的面积分）就是固定的，由此可推出任意距光源$r$处的光照强度$I_r$
 
@@ -622,7 +622,7 @@ $I$为单位距离$r=1$处的光强
 <img src="E:/weapons/Graphics/src/games101/rendering/point_light_intensity.png" width="50%">
 </div>
 
-##### Diffusion reflection
+#### Diffusion reflection
 
 - 漫反射：光线入射到粗糙的物体表面，反射光向各个方向射出，而不仅仅是镜面反射方向
 - 朗伯反射（Lambertian reflectance）：物体表面是理想的漫反射表面，反射光的光强在反射面上均匀分布。Blinn-Phong使用该模型建模漫反射
@@ -647,7 +647,7 @@ $$L_d = k_d (I / r^2) \max(0, n \cdot l)$$
 <img src="E:/weapons/Graphics/src/games101/rendering/blinn-phong_lambertian_diffuse_shading.png" width="50%">
 </div>
 
-##### Specular reflection
+#### Specular reflection
 
 看到高光的强弱程度取决于观测方向是否接近于反射光的方向。这里有两种方法：Phong模型直接计算镜面反射方向，Blinn-Phong模型计算**半程向量（half vector）**
 
@@ -671,7 +671,7 @@ $$2(l \cdot n)n = l + r \Rightarrow r = 2(l \cdot n)n - l$$
 
 $$L_s = k_s(I / r^2)\max (0, v\cdot r)^p$$
 
-##### Ambient light
+#### Ambient light
 
 环境光是非常复杂的弹弹乐，Blinn-Phong简单将这一项处理为常数项
 
@@ -679,7 +679,7 @@ $$L_s = k_s(I / r^2)\max (0, v\cdot r)^p$$
 <img src="E:/weapons/Graphics/src/games101/rendering/blinn-phong_ambient_term.png" width="50%">
 </div>
 
-##### Full model
+#### Full model
 
 完整的Blinn-Phong光照模型就是以上三部分求和
 
@@ -687,7 +687,7 @@ $$L_s = k_s(I / r^2)\max (0, v\cdot r)^p$$
 <img src="E:/weapons/Graphics/src/games101/rendering/blinn-phong_reflectance_model.png" width="50%">
 </div>
 
-#### Shading Frequencies
+### Shading Frequencies
 
 着色频率直接影响最终的渲染效果
 
@@ -715,7 +715,7 @@ $$L_s = k_s(I / r^2)\max (0, v\cdot r)^p$$
 
 接下来要解决两个问题：1. 如何计算顶点的法向量？2. 如何在三角形内部插值计算颜色？
 
-#### Vertex Normal
+### Vertex Normal
 
 - 为什么要计算顶点法向，实际的物理意义是什么？
 
@@ -727,7 +727,7 @@ Flat shading问题很明显：1. 不同三角形间的颜色没有平缓过渡�
 <img src="E:/weapons/Graphics/src/games101/rendering/vertex_normal.png" width="50%">
 </div>
 
-#### Braycentric interpolation
+### Braycentric interpolation
 
 - 为什么需要插值？
 
@@ -745,7 +745,7 @@ Flat shading问题很明显：1. 不同三角形间的颜色没有平缓过渡�
 <img src="E:/weapons/Graphics/src/games101/rendering/braycentric_coord_area_compute.png" width="30%"><img src="E:/weapons/Graphics/src/games101/rendering/braycentric_coord_direct_compute.png" width="30%">
 </div>
 
-#### Perspective-Correct interpolation
+### Perspective-Correct interpolation
 
 问题：插值应该在三维场景下计算，然后对应到屏幕上的位置，但上面的插值计算是在二维屏幕/投影平面上进行。在相机视角下，只要物体的深度$z$不恒定，透视投影就会导致形状改变，插值系数就会出现偏差
 
@@ -757,12 +757,12 @@ Flat shading问题很明显：1. 不同三角形间的颜色没有平缓过渡�
 
 另一个问题：为什么不做逆变换，直接换到三维空间上的坐标再插值？这有两个原因：
 
-1. 次要原因：对屏幕空间上的所有点进行逆变换，计算量大。另外，这个理由禁不起推敲，因为无法做逆变换（see next for detail reason）
+1. 次要原因：对屏幕空间上的所有点进行逆变换，计算量大。但这个理由禁不起推敲，因为无法做逆变换
 2. 根本原因：除三角形顶点外，我们无法直接求出二维屏幕上的任一点$(x, y)$在三维场景中的深度$z$，因此无法进行逆变换。也正是由于这一点，我们在MVP + 视口变换后始终回避$z$方向上的建模（除了z-buffer和w-buffer，这两者是在MVP的正向变换路径上建模）
 
-总结第二个主要问题：在三维场景空间中，我们只知道（三角形）顶点坐标$(x, y, z)$（under model space，其他空间下的坐标可以通过变换获得）。在二维屏幕空间中，除顶点外，我们无法直接确定任意点$(x, y)$对应的深度。因此需要找到一种方法，绕开深度的直接求解。透视矫正插值寻找二维屏幕空间和三维场景空间插值系数的对应关系，先避开直接求解未知点的深度。在确定插值系数后，就可以通过插值计算未知点的深度值，曲线救国地对未知点进行了求解。可以证明，只要几何面是平面（透视投影前），插值法计算出的深度就是真实深度。
+总结第二个主要问题：在三维场景空间中，我们知道（三角形）顶点坐标$(x, y, z)$（under model space，其他空间下的坐标可以通过变换获得）。在二维屏幕空间中，除顶点外，我们无法直接确定任意点$(x, y)$对应的深度。因此需要找到一种方法，绕开深度的直接求解。透视矫正插值寻找二维屏幕空间和三维场景空间插值系数的对应关系，先避开直接求解未知点的深度。在确定插值系数后，就可以通过插值计算未知点的深度值，曲线救国地对未知点进行了求解。可以证明，只要几何面是平面（透视投影前），插值法计算出的深度就是真实深度。
 
-推导和应用透视矫正插值的核心点：1. **确定插值对象在哪个空间** 2. 明确坐标在哪个空间 3. 用约束条件检查正确性
+推导和应用透视矫正插值的关键点：1. 确定插值对象在哪个空间 2. 明确坐标在哪个空间 3. 约束条件
 
 （adapt from [UCR CS130: perspective-correct-interpolation](./src/games101/rendering/perspective-correct-interpolation.pdf)）
 
@@ -863,7 +863,7 @@ $(\mathrm{PCI})$式将二维屏幕空间下的插值系数矫正为三维场景�
 
 3D空间中的几何面方程是关于$x, y, z$的affine equation，这保证了插值是正确的。
 
-proof. 设三角形所在平面方程为$Ax + By + Cz + D = 0$（注意这里$A, B, C, D \in R$，不是三角形顶点）。三角形顶点坐标为$(x_i, y_i), \hspace{2px} i = 1, 2, 3$。目标是检查在三维空间插值后的$P$点是否落在三角形所在平面上。如果$P$仍在平面上，则说明深度插值得到的就是真实深度
+proof. 设三角形所在平面方程为$Ax + By + Cz + D = 0$（注意这里$A, B, C, D \in R$，不是三角形顶点）。三角形顶点坐标为$(x_i, y_i, z_i), \hspace{2px} i = 1, 2, 3$。目标是检查在三维空间插值后的点$P(x, y, z)$是否落在三角形所在平面上。如果$P$仍在平面上，则说明深度插值得到的就是真实深度
 
 $$ \begin{gather}
 \begin{pmatrix}
@@ -885,7 +885,7 @@ $$\alpha(Ax_1 + By_1 + Cz_1) + \beta(Ax_2 + By_2 + Cz_2) + \gamma (Ax_3 + By_3 +
 
 这里再次用了约束条件$\alpha + \beta + \gamma = 1$。因此插值后的$P$点就在平面上。这证明对于任意几何**平面**，都能通过方程$(\mathrm{PCI} \text{-} 2)$和$(\mathrm{D} \text{-} \mathrm{interp})$进行插值，得到正确的深度解。Q.E.D.
 
-#### Graphics/Rendering Pipeline
+### Graphics/Rendering Pipeline
 
 <div align=center>
 <img src="E:/weapons/Graphics/src/games101/rendering/rendering_pipeline.png" width="50%">
@@ -897,7 +897,7 @@ $$\alpha(Ax_1 + By_1 + Cz_1) + \beta(Ax_2 + By_2 + Cz_2) + \gamma (Ax_3 + By_3 +
 <img src="E:/weapons/Graphics/src/games101/rendering/rendering_pipeline_shading_freq.png" width="50%">
 </div>
 
-#### Texture Mapping
+## Texture Mapping
 
 纹理表现为颜色的变化/分布，建模在漫反射系数$k_d$上。物体表面的纹理可以展开为一张二维空间下的纹理图，$u, v$表示这个空间的基向量。类似pixel，纹理图上的纹理单元称为texel（纹素）。纹理映射$\phi: (x, y, z) \rightarrow (u, v)$将三维空间中的位置映射到纹理空间上
 
@@ -916,7 +916,7 @@ $$\alpha(Ax_1 + By_1 + Cz_1) + \beta(Ax_2 + By_2 + Cz_2) + \gamma (Ax_3 + By_3 +
 <img src="E:/weapons/Graphics/src/games101/rendering/texture_mapping.png" width="50%">
 </div>
 
-##### Magnification and Minification
+### Magnification and Minification
 
 纹理分辨率过小，屏幕分辨率大，一个pixel映射到纹理图上就小于一个texel，做纹理贴图时就需要对纹理上采样，插值即可
 
@@ -937,7 +937,7 @@ $$\alpha(Ax_1 + By_1 + Cz_1) + \beta(Ax_2 + By_2 + Cz_2) + \gamma (Ax_3 + By_3 +
 
 类似于MSAA对SSAA的优化，可以在range query范围内做平均。由于$\phi$的一般性（大概率是个非线性变换），不同的pixel square映射到纹理图的覆盖区域大小和形状多变，导致计算效率不高，因此需要加速。
 
-##### Mipmap
+### Mipmap
 
 > In Computer Vision，the alias of Mipmap is Image/Feature Pyramid
 
@@ -958,7 +958,7 @@ Mipmap是一种加速range query的方法，核心是近似。覆盖区域大小
 
 > 整个计算过程就类似于2D object detection w/ FPN的分治策略
 
-##### Shape variance
+### Shape variance
 
 Mipmap用金字塔近似解决了多尺度问题，但仍未解决非线性的$\phi$带来的形状扭曲。Mipmap将覆盖范围近似为正方形，这与真实覆盖范围不一致，求平均后导致了纹理模糊
 
@@ -985,3 +985,16 @@ Mipmap是右上图中的对角线路径，保持长宽比不变。Ripmap建立�
 
 这部分可以参考pbrt和文章 https://zhuanlan.zhihu.com/p/105167411
 
+### Texture Applications - More than texture
+
+TODO
+
+更偏概念性的东西：环境光（spherical map, cube map）、环境光遮蔽... 这部分更多都是例子，理论很少，需要酌情刷一遍lecture 10的pdf以及虎书
+
+理论实践更清晰的东西：法线贴图、位移贴图，涉及local coordinate到camera coordinate转换，根据HW3 FAQ来看会在光追和路径追踪里面推导。这部分还算清楚
+
+## Geometry
+
+TODO
+
+显式表达，隐式表达。隐式表达里SDF是这部分讲过的一个重要部分。需要刷一遍lecture 10的pdf以及虎书，可以参考https://zhuanlan.zhihu.com/p/201382429
