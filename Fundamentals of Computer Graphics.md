@@ -8,7 +8,7 @@
 
 ## Transformation and Homogeneous coordinate
 
-- prerequisite: [Geometry of Linear Transformation](./Fundamental%20Calculus%20and%20Linear%20Algebra.md)，根据线性变换的本质快速确定变换矩阵
+**Prerequisite**：[Geometry of Linear Transformation](./Fundamental%20Calculus%20and%20Linear%20Algebra.md)，根据线性变换的本质快速确定变换矩阵
 
 ### Homogeneous coordinate
 
@@ -89,7 +89,7 @@ Assume:
 
 ModelView + Projection两种变换合称为MVP变换
 
-#### ModelView Transformation
+### ModelView Transformation
 
 确定相机的位置和姿态，需要：相机中心$\vec{e} = (x, y, z)$，相机的look at/gaze方向$\hat{g}$（朝哪儿看），向上方向$\hat{t}$（相机是正着拍，还是斜着拍？）
 
@@ -111,17 +111,17 @@ ModelView + Projection两种变换合称为MVP变换
 <img src="E:/weapons/Graphics/src/games101/MVP%20Transform/camera_pose_matrix.png" width="50%">
 </div>
 
-#### Digression: SLAM和多视图几何中的「换系」和 「位姿（Pose）」
+### Digression: SLAM和多视图几何中的「换系」和 「位姿（Pose）」
 
-##### SLAM中的约定
+#### SLAM中的约定
 
 - 换系：SLAM中，多以「换系」的视角来处理多个坐标系
 - 参考坐标系：以坐标系$D$为参考坐标系是说：我们处在$D$坐标系下，所有点都表示为$D$下的坐标
 - 位姿（Pose）：相机的位姿 = 位置$(x, y, z)$ + 姿态$(yaw, roll, pitch)$。在相机坐标系下谈论相机自身的Pose是没有意义的（因为相机就在原点，三个姿态角相对坐标轴均为零）。只有在非相机坐标系（此时该坐标系为参考系）下观察相机时Pose才是有意义的。如果将$(yaw, roll, pitch)$转换为旋转矩阵$R$，向量$t = (x, y, z)$为相机相对参考系原点的平移量，$T = \begin{pmatrix} R, t \\ 0^T, 1 \end{pmatrix}$称为相机的**位姿矩阵**。可以证明，$T$矩阵就是将坐标从相机坐标系换到参考坐标系（**camera-to-ref**）的变换矩阵
 
-##### 证明：位姿矩阵就是换系（camera-to-ref）的变换矩阵
+#### 证明：位姿矩阵就是换系（camera-to-ref）的变换矩阵
 
-**Prerequisite**: [线性变换的几何意义](#数学基础理解线性变换的几何意义)
+**Prerequisite**：[Geometry of Linear Transformation](./Fundamental%20Calculus%20and%20Linear%20Algebra.md)
 
 线性变换矩阵$A$的核心点
 
@@ -156,7 +156,7 @@ c. 相机坐标系$S$的基向量与中间坐标系$S^{\prime}$的基向量相�
 
 $$ P_{ref} = T_{rc}P_{cam}$$
 
-##### MV变换与Pose的关系
+#### MV变换与Pose的关系
 
 - Pose是在当前参考坐标系下观察相机的位置和姿态。位姿矩阵$T$描述的是从相机坐标系转换到参考坐标系的**换系**矩阵
 - ModelView变换是将相机（View）和场景（Model）作为一个整体，**平移+线性变换**到参考坐标系（标准位置）。变换前，参考坐标系下的相机和场景中物体的坐标是已知的。变换后，相机坐标系与参考系重合。因此相当于从参考系换到相机坐标系
@@ -171,7 +171,7 @@ $$ P_{ref} = T_{rc}P_{cam}$$
 - MV变换：从结果上看，相当于进行了换系，从参考坐标系换到相机坐标系。原先已知的是任意点在参考坐标系下的坐标。MV变换后，相机坐标系与参考坐标系重合，所有点的坐标处于相机坐标系下
 - Pose就是在换系：从相机坐标系换到参考坐标系
 
-#### Projection Transformation: prepare for projection
+### Projection Transformation: prepare for projection
 
 投影的目的：划定一定范围内的model（这个范围又称为裁剪空间），将远平面到近平面所有的内容投影到近平面上
 
@@ -185,11 +185,11 @@ $$ P_{ref} = T_{rc}P_{cam}$$
 
 实际场景可能不止一个物体，而且同一个物体也会有正反面，相机视角下存在遮挡关系（occlusion），用$z$确定物体的可见性（visibility. will discuss in next section）
 
-##### 正交投影与透视投影的关系
+#### 正交投影与透视投影的关系
 
 相机无穷远，透视投影与正交投影相同：相机离近平面（和远平面）越远，近、远两平面的尺寸差距越小，光线平行度越高。如果相机（距离近平面）无穷远，且近平面和远平面距离有限，那么两平面大小相同，光线平行，透视投影变为正交投影。
 
-#### Orthographic projection
+### Orthographic projection
 
 简单理解：相机处于标准位置，扔掉$z$坐标，然后将结果rescale到$[-1, 1]^2$范围内（长宽缩放比可能不一样，aspect ratio会变）
 
@@ -215,14 +215,14 @@ $$
 
 注：相机看向$-z$方向，$n > f$
 
-#### Perspective Projection
+### Perspective Projection
 
 对于透视投影的视锥，如果能将远平面变得跟近平面一样大，那么再利用正交投影就可完成整个透视投影。因此透视投影分两步走：
 
 - 将frustum变换为正交投影的cuboid
 - 正交投影转换到$[-1, 1]^3$
 
-##### frustum -> orthographic cuboid
+#### frustum -> orthographic cuboid
 
 视锥内任一点$(x, y, z)$，投影到近平面上的位置容易找到：相似三角形即可
 
@@ -370,7 +370,7 @@ n & 0 & 0 & 0 \\
 \end{pmatrix}
 $$
 
-#### MVP Transform
+### MVP Transform
 
 到目前为止，我们已经完成了MVP变换中的所有components，将视锥 or orthographic cuboid转化为$[-1, 1]^3$内的标准的cuboid，这个cuboid简称为NDC（标准化设备坐标，Normalized Device Coordinate）。在变换部分，还有最后的一个视口变换（viewport transformation）将NDC在$x, y$方向上拉伸为图像的$width$和$height$，便于成像（渲染）。
 
@@ -380,7 +380,7 @@ MVP变换过程：MV变换（从任意参考系换到相机坐标系下）-> 透
 
 $$ M_{MVP} = M_{ortho}M_{persp \rightarrow ortho}M_{view} $$
 
-#### Viewport Transform
+### Viewport Transform
 
 先定义屏幕（screen）：像素定义为内部颜色不会发生变化的小方块（pixel square）
 
@@ -396,9 +396,9 @@ $$ M_{MVP} = M_{ortho}M_{persp \rightarrow ortho}M_{view} $$
 - 整个屏幕覆盖所有pixel square，因此屏幕处于从$(0, 0)$到$(width, height)$的连续区域内
 
 > Note：像素中心坐标的定义在不同的教材中会略有差别，但其他核心定义不会变
-> 
+>
 > e.g. 虎书将像素中心定义在整数坐标上
-> 
+>
 > <img src="E:/weapons/Graphics/src/games101/screen_def_tiger_book.png" width="50%">
 
 视口变换非常简单：将NDC从$[-1, 1]^3$变到$x \in [0, width] \times y \in [0, height] \times z\in [-1, 1]$，也就是说$z$不变，在$x, y$上平移和缩放<br>
@@ -426,7 +426,7 @@ $$
 
 （这里先缩放后平移，因此需要注意平移的offset）
 
-#### Full Transformation
+### Full Transformation
 
 透视除法可以放在最后
 
@@ -526,7 +526,7 @@ SSAA在效果上是最好的抗锯齿方法，代价就是$n^2$的计算复杂�
 
 3. Multi-Sampling Anti-Aliasing (MSAA)
 
-既然着色的开销大，那就仅在光栅化阶段使用supersampling而不对子采样点着色。MSAA在光栅化阶段接受$n^2$的supersampling，与SSAA相同。不同点在于，MSAA计算每个pixel supersampling的覆盖率，而不直接对每个子采样点着色。在着色阶段，对于覆盖率大于0的pixel运行一次pixel shader，并将颜色乘以覆盖率。 
+既然着色的开销大，那就仅在光栅化阶段使用supersampling而不对子采样点着色。MSAA在光栅化阶段接受$n^2$的supersampling，与SSAA相同。不同点在于，MSAA计算每个pixel supersampling的覆盖率，而不直接对每个子采样点着色。在着色阶段，对于覆盖率大于0的pixel运行一次pixel shader，并将颜色乘以覆盖率。
 
 <div align=center>
 <img src="E:/weapons/Graphics/src/games101/rendering/MSAA_average.png" width="50%">
@@ -575,7 +575,7 @@ SSAA在效果上是最好的抗锯齿方法，代价就是$n^2$的计算复杂�
 </div>
 
 > **local & non-local**: local和non-local是相对的，**超出local model建模的区域就是non-local的**。例如，shading建模光照时只考虑着色点附近的一小块区域，因此shading is local。阴影（shadow）属于shading建模区域外的部分，因此对shading来说，shadow就是non-local的。
-> 
+>
 > 理解why model is local的时候，举出non-local的例子，对理解会有很大帮助。
 
 ### Shading input
