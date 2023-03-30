@@ -39,21 +39,21 @@ $$
 
 $$ \begin{gather}
 I(s + \Delta s) = I(s) \cdot \left( 1 - \sigma(s) \Delta s \right) \\[5pt]
-\frac{dI}{ds} = -I(s) \sigma(s) \tag{*}
+\frac{dI}{ds} = -I(s) \sigma(s)
 \end{gather} $$
 
 解得
 
-$$ I(b) = I(a)e^{-\int_a^b \sigma(t)dt} $$
+$$ I(b) = I(a)e^{-\int_a^b \sigma(t)dt} \tag{absorption} $$
 
-定义$T(a \rightarrow b) = e^{-\int_a^b \sigma(t)dt}$，$\sigma(s), T(a \rightarrow b)$的物理意义非常重要
+##### Density and Transmittance
 
-$\sigma(s)$：光在$s$处传播极小一段距离$ds$碰到粒子的概率
+定义$T(a \rightarrow b) = e^{-\int_a^b \sigma(t)dt}$，$\sigma(s), \hspace{2pt} T(a \rightarrow b)$的物理意义非常重要
 
-> TODO: 随便画一个$I(s)$的图，考虑(\*)式的在图像上的含义
+- $\sigma(s)$：累加射线路径上所有位置的$\sigma$，求和结果$\int_a^b \sigma(t)dt$成为了某种衰减比例，因此$\sigma(s)$表示$s$处粒子群的某种**密度（Density）**，或光在$s$处碰到粒子的概率
+- $T(a \rightarrow b)$：从方程$\text{(absorption)}$来看，$T(a \rightarrow b) = I(b)/I(a)$，描述了光从$a$传播到$b$，光没有碰到粒子的概率，因此$T(a \rightarrow b)$称为光的**透射率**（**Transmittance**）或**透明度**（**Opacity**）
 
-若粒子群是均匀的（$\sigma(s)$为常数），入射光进入粒子群后，辐射强度呈指数衰减，这种特殊情况称为比尔-朗伯吸收定律（Beer-Lambert law）<br>
-$T(a \rightarrow b)$：$T(a \rightarrow b) = I(b)/I(a)$，光沿射线从$a$传播到$b$，没有碰到粒子的概率，称为光的**透射率（Transmittance）**
+若粒子群是均匀的（$\sigma(s) = constant$），光的辐射强度呈指数衰减，这种特殊情况称为比尔-朗伯吸收定律（Beer-Lambert law）
 
 #### Emission (+)
 
@@ -140,9 +140,17 @@ T(t) = e^{-\int_{t_n}^t \sigma(r(s)) ds} \tag{Nerf-RE} $$
 
 $(\text{Nerf-RE})$式没有一般的解析表达，需要在路径上进行采样才能实现，因此需要将积分化为离散求和。离散化的原理非常简单，就是利用定积分的定义，将连续区间按一定间隔划分，然后用不带极限的离散求和近似
 
-$$ \int_{x_0}^{x_1} f(x)dx \approx \sum_{i} f(x_0 + i\Delta x_i)\Delta x_i $$
+$$ \int_{x_0}^{x_n} f(x)dx =
+\sum_{i=0}^{n-1} \int_{x_i}^{x_{i + 1}} f(x)dx \approx
+\sum_{i=0}^{n-1} f(x_0 + i\Delta x_i)\Delta x_i, \hspace{2pt}
+\Delta x_i = x_{i+1} - x_i $$
 
-如果每次都等间隔划分积分区间，子区间内固定采样位置（一般取区间端点或中点），用划分得到的这些矩形面积之和来近似$(\text{Nerf-RE})$，会破坏场景表示的连续性。因此区间划分需要具有随机性。Nerf的做法是，仍然在$[t_n, \hspace{1pt} t_f]$上等间隔划分$N$个子区间，第$i$个子区间为$[t_n + \frac{i - 1}{N}(t_f - t_n), t_n + \frac{i}{N}(t_f - t_n)], \hspace{2pt} i=1, 2, ..., N$，但每个子区间内用均匀分布随机选取采样点
+积分形式的渲染方程和隐式的3D场景表示的最主要的优势是：**连续**的场景表示。如果每次都等间隔划分积分区间，子区间内固定采样位置（一般取区间端点或中点），用划分得到的这些矩形面积之和来近似渲染方程$(\text{Nerf-RE})$，会在两方面破坏连续性：
+
+- 离散求和会破坏积分的连续性。为了实际实现，这是不可避免的，因此只能将间隔取的尽量小
+- 神经辐射场的输入$(x, y, z)$被固定在采样点处，因此只在采样点处充分训练，其他位置的场景表示能力不足甚至缺失
+
+解决方法是随机划分区间，随机选择采样点：仍然在$[t_n, \hspace{1pt} t_f]$上等间隔划分$N$个子区间，第$i$个子区间为$[t_n + \frac{i - 1}{N}(t_f - t_n), t_n + \frac{i}{N}(t_f - t_n)], \hspace{2pt} i=1, 2, ..., N$，但每个子区间内用均匀分布随机选取采样点
 
 $$ t_i \sim \mathcal{U} \hspace{1pt}
 [t_n + \frac{i - 1}{N}(t_f - t_n), t_n + \frac{i}{N}(t_f - t_n)], \hspace{2pt}
@@ -176,4 +184,9 @@ c_i T_i \left(1 - e^{-\sigma_i \delta_i} \right) $$
 
 $$ C = \sum_{i=1}^{N} T_i c_i (1 - e^{-\sigma_i \delta_i}), \hspace{3pt}
 \text{where} \hspace{3pt} T_i = e^{-\sum_{j=1}^{i-1} \sigma_j\delta_j} $$
+
+### Behind the Scenes
+
+- Paper: https://arxiv.org/pdf/2301.07668.pdf
+- Code: https://github.com/Brummi/BehindTheScenes
 
