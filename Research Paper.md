@@ -19,7 +19,7 @@ A fragment shader：从相机光心出发，向图像上的像素点发射一条
 体渲染模型将光线与粒子群的作用分为absorb, emission和scatter，scatter又分为in scatter和out scatter，所有部分求和就是volume rendering equation。Nerf的体渲染方程只考虑absorb和emission，忽略scatter
 
 <center>
-<img src="E:/weapons/Graphics/src/paper-research/volume_rendering_buildup.png" width="50%">
+<img src="E:/weapons/Graphics/src/research-paper/volume_rendering_buildup.png" width="50%">
 </center>
 
 > out-scattering：射线方向上的入射光碰撞粒子群后反射到非射线方向
@@ -183,7 +183,8 @@ $$ C = \sum_{i=1}^{N} T_i c_i (1 - e^{-\sigma_i \delta_i}), \hspace{3pt}
 
 ### Behind the Scenes (n7, e7, s8)
 
-- Paper: https://arxiv.org/pdf/2301.07668.pdf
+- Paper: [research-paper/behind-the-scenes.pdf](./research-paper/behind-the-scenes.pdf)
+- Arxiv paper: https://arxiv.org/pdf/2301.07668.pdf
 - Code: https://github.com/Brummi/BehindTheScenes
 - Groups: 慕尼黑工业大学（TUM）
 
@@ -198,8 +199,26 @@ $$ C = \sum_{i=1}^{N} T_i c_i (1 - e^{-\sigma_i \delta_i}), \hspace{3pt}
 - density建模物体材质的透光率，影响物体表面的颜色。对于三维重建来说，density可以直接描述物体的几何信息，以及空间中的位置是否被占据（occupancy），是3D重建最关键的部分之一
 - 颜色：最直接的想法，可以直接从图像中取颜色。虽然着色受视角影响，但离得近的不同视角下颜色是相近的。直接取颜色能极大降低模型学习难度
 
-因此核心想法是：神经辐射场只负责从图像中建模density，颜色直接从其他视角取。相似的视角下颜色相差不大，因此数据上使用视频
+因此核心想法是：神经辐射场只负责从图像中建模density，颜色直接从其他视角取。相似的视角下颜色相差不大，因此需要使用视频数据
 
 #### Highlights
 
-1. 没有盲目的将隐式表示换为网格表示
+1. occupancy仍然使用神经辐射场，没有盲目将隐式表示换为网格表示
+
+隐式表示的最大优势就是连续性。神经辐射场隐式表示连续的3D场景空间，常规的occupancy grid可以直接采样神经辐射场生成。直接在occupancy grid上进行体渲染不是最优解
+
+2. 颜色不必预测，可以复用视角相似的图像
+
+这一点是比较显然的，只要视角相差不大，颜色差别很小，通过pose直接投影取值即可
+
+3. Reprojection loss能够自适应地处理遮挡问题
+
+训练时选取$k$张「参考图」取颜色，在新视角下分别渲染出$k$张图。计算损失时，只让取到正确颜色的pixel对训练有贡献，完成这件事的方法是：$k$张渲染出的图与监督图像分别计算逐像素的loss（不做reduction），在$(u, v)$位置的像素有$k$个loss，最小的loss对参数优化产生贡献。这种方法自适应地处理了遮挡问题
+
+Reprojection loss源于ICCV19的一篇自监督单目深度估计的工作[Digging Into Self-Supervised Monocular Depth Estimation](https://arxiv.org/abs/1806.01260)，这个工作在当时是非常超前的
+
+4. density必须抑制错误的颜色
+
+<center>
+<img src="E:/weapons/Graphics/src/research-paper/behind-the-scene.png" width="50%">
+</center>
