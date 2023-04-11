@@ -41,7 +41,7 @@
 ### 旋转方向的选取对旋转矩阵的影响
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/rigid%20transform/rotation_angle.png" width="50%"  height="50%">
+<img src="E:/Weapons/Graphics/src/games101/rigid%20transform/rotation_angle.png" width="50%">
 </center>
 
 - Why $R_y(\alpha)$ (rotate around the y-axis) is different?
@@ -206,9 +206,9 @@ $$ M_{ortho} = \underbrace{\begin{pmatrix}
 0 & 0 & 1 & -\frac{n + f}{2} \\
 0 & 0 & 0 & 1
 \end{pmatrix}}_{translation} = \begin{pmatrix}
-\frac{2}{r - l} & 0 & 0 & \frac{r + l}{r-l} \\
-0 & \frac{2}{t - b} & 0 & \frac{b + t}{b-t} \\
-0 & 0 & \frac{2}{n - f} & \frac{f + n}{f-n} \\
+\frac{2}{r - l} & 0 & 0 & -\frac{r + l}{r - l} \\
+0 & \frac{2}{t - b} & 0 & -\frac{t + b}{t - b} \\
+0 & 0 & \frac{2}{n - f} & -\frac{n + f}{n - f} \\
 0 & 0 & 0 & 1
 \end{pmatrix}
 $$
@@ -358,9 +358,9 @@ $$
 将变为cuboid的视锥进行正交投影，就是完整的透视投影
 
 $$ M_{persp} = M_{ortho}M_{persp \rightarrow ortho} = \begin{pmatrix}
-\frac{2}{r - l} & 0 & 0 & \frac{r + l}{r-l} \\
-0 & \frac{2}{t - b} & 0 & \frac{b + t}{b-t} \\
-0 & 0 & \frac{2}{n - f} & \frac{f + n}{f-n} \\
+\frac{2}{r - l} & 0 & 0 & -\frac{r + l}{r - l} \\
+0 & \frac{2}{t - b} & 0 & -\frac{t + b}{t - b} \\
+0 & 0 & \frac{2}{n - f} & -\frac{n + f}{n - f} \\
 0 & 0 & 0 & 1
 \end{pmatrix} \begin{pmatrix}
 n & 0 & 0 & 0 \\
