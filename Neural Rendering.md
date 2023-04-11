@@ -196,7 +196,7 @@ $$ C = \sum_{i=1}^{N} T_i c_i (1 - e^{-\sigma_i \delta_i}), \hspace{3pt}
 
 #### Motivation: Low frequency bias/prior of Deep Network
 
-最原始的Nerf渲染出的图比较糊，在颜色、几何边界处效果差，说明模型拟合高频信息的能力较差。[Spectral Bias](https://arxiv.org/pdf/1806.08734.pdf), [Frequency Bias](https://arxiv.org/pdf/2003.04560.pdf), [Fourier Features](https://arxiv.org/pdf/2006.10739.pdf)等理论工作证明：如果不施加外力，Deep Networks**倾向于**学出一个低频函数（low frequency function），但只是**倾向**。这可以看作是Deep Network的一个先验。人为地将输入变为高频，或额外添加高频内容（例如位置编码），MLP同样可以学习高频信息。
+最原始的Nerf渲染出的图比较糊，在颜色、几何边界处效果差，说明模型拟合高频信息的能力较差。[Spectral Bias](https://arxiv.org/pdf/1806.08734.pdf), [Frequency Bias](https://arxiv.org/pdf/2003.04560.pdf), [Fourier Features](https://arxiv.org/pdf/2006.10739.pdf)等理论工作证明：如果不施加外力，Deep Networks**倾向于**学出一个低频函数（low frequency function），但只是**倾向**，这可以看作是Deep Network的一个先验。人为地将输入变为高频，或额外添加高频内容（例如位置编码），MLP同样可以学习高频信息。
 
 ### Hierarchical Sampling
 
