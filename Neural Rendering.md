@@ -57,10 +57,10 @@ $$ I(b) = I(a)e^{-\int_a^b \sigma(t)dt} \tag{absorption} $$
 
 定义$T(a \rightarrow b) = e^{-\int_a^b \sigma(t)dt}$，$\sigma(s), \hspace{2pt} T(a \rightarrow b)$的物理意义非常重要
 
-- $\sigma(s)$：累加射线路径上所有位置的$\sigma$，求和结果$\int_a^b \sigma(t)dt$成为了某种衰减比例，因此$\sigma(s)$表示$s$处粒子群的某种**密度（Density）**，或光在$s$处碰到粒子的概率
-- $T(a \rightarrow b)$：从方程$\text{(absorption)}$来看，$T(a \rightarrow b) = I(b)/I(a)$，描述了光从$a$传播到$b$，光没有碰到粒子的概率，因此$T(a \rightarrow b)$称为光的**透射率**（**Transmittance**）或**透明度**（**Opacity**）
+- $\sigma(s)$：路径积分$\int_a^b \sigma(t)dt$是光强的某种衰减比例，因此任意单个位置上的$\sigma$就表示粒子群的**密度（Density）**，实际上就是粒子面密度。概率解释为：光在$s$处碰到粒子的概率 $\Leftrightarrow \sigma(s)$ is a Probability **Density** Function (PDF)
+- $T(a \rightarrow b) = I(b)/I(a)$：光传播到$b$时的光强相对起始位置$a$保留的比例。概率解释是：光从$a$到$b$没有碰到粒子的概率。$T(a \rightarrow b)$称为**透射率**（**Transmittance**）或**透明度**（**Opacity**）
 
-若粒子群是均匀的（$\sigma(s) = constant$），光的辐射强度呈指数衰减，这种特殊情况称为比尔-朗伯吸收定律（Beer-Lambert law）
+若粒子群是均匀的（i.e. $\sigma(s) = constant$），光的辐射强度呈指数衰减，这种特殊情况称为比尔-朗伯吸收定律（Beer-Lambert law）
 
 ### Emission (+)
 
@@ -144,7 +144,9 @@ T(t) = e^{-\int_{t_n}^t \sigma(r(s)) ds} \tag{Nerf-RE} $$
 
 这就是Nerf的渲染方程
 
-### Riemann Sum (Nerf, piecewise constant data)
+### Riemann Sum (piecewise constant data)
+
+#### Fixed sampling problem
 
 $(\text{Nerf-RE})$式没有一般的解析表达，需要在路径上进行采样才能实现，因此需要将积分化为离散求和。离散化的原理非常简单，就是利用定积分的定义，将连续区间按一定间隔划分，然后用不带极限的离散求和近似
 
@@ -156,9 +158,13 @@ $$ \int_{x_0}^{x_n} f(x)dx =
 积分形式的渲染方程和隐式的3D场景表示的最主要的优势是：**连续**的场景表示。如果每次都等间隔划分积分区间，子区间内固定采样位置（一般取区间端点或中点），用划分得到的这些矩形面积之和来近似渲染方程$(\text{Nerf-RE})$，会在两方面破坏连续性：
 
 - 离散求和会破坏积分的连续性。实现中这是不可避免的，因此只能将间隔取的尽量小
-- 神经辐射场的输入$(x, y, z)$被固定在采样点处，因此只在采样点处充分训练，其他位置的场景表示能力不足甚至缺失
+- 神经辐射场的输入$(x, y, z)$固定在采样点处，因此只在这些位置充分训练，非采样点的场景表示能力不足甚至缺失，破坏了连续表示
 
-解决方法是，随机划分区间，同时随机选择采样点。仍然在$[t_n, \hspace{1pt} t_f]$上等间隔划分$N$个子区间，第$i$个子区间为$[t_n + \frac{i - 1}{N}(t_f - t_n), t_n + \frac{i}{N}(t_f - t_n)], \hspace{2pt} i=1, 2, ..., N$，但每个子区间内用均匀分布随机选取采样点
+#### Stratified Sampling
+
+解决方案自然就是非均匀采样：随机划分区间，同时随机选择采样点。Nerf提出stratified sampling（分层采样）策略做非均匀采样
+
+在$[t_n, \hspace{1pt} t_f]$上等间隔划分$N$个子区间，第$i$个子区间为$[t_n + \frac{i - 1}{N}(t_f - t_n), t_n + \frac{i}{N}(t_f - t_n)], \hspace{2pt} i=1, 2, ..., N$，但每个子区间内用均匀分布随机选取采样点
 
 $$ t_i \sim \mathcal{U} \hspace{1pt}
 [t_n + \frac{i - 1}{N}(t_f - t_n), t_n + \frac{i}{N}(t_f - t_n)], \hspace{2pt}
@@ -192,19 +198,39 @@ c_i T_i \left(1 - e^{-\sigma_i \delta_i} \right) $$
 $$ C = \sum_{i=1}^{N} T_i c_i (1 - e^{-\sigma_i \delta_i}), \hspace{3pt}
 \text{where} \hspace{3pt} T_i = e^{-\sum_{j=1}^{i-1} \sigma_j\delta_j} $$
 
+#### Consistency
+
+观察同一视角下相邻的两次优化：两组不同的随机采样点，渲染方程计算出两张不同的渲染图，但他们都以同一张图为优化目标，因此**模型对采样具有一致性**。
+
 ### Positional Encoding
 
 #### Motivation: Low frequency bias/prior of Deep Network
 
-最原始的Nerf渲染出的图比较糊，在颜色、几何边界处效果差，说明模型拟合高频信息的能力较差
+最原始的Nerf渲染出的图比较糊，在颜色、几何边界处效果差，说明模型拟合高频信息的能力较差。
 
 [Spectral Bias](https://arxiv.org/pdf/1806.08734.pdf), [Frequency Bias](https://arxiv.org/pdf/2003.04560.pdf), [Fourier Features](https://arxiv.org/pdf/2006.10739.pdf)等理论工作证明：如果不施加外力，Deep Networks**倾向于**学出一个低频函数（low frequency function），但只是**倾向**，这可以看作是Deep Network的一个先验。如果将输入用一个高频函数映射到高维空间（位置编码就是一种高频函数），MLP同样可以学习高频信息
 
-直观上，**DeepNet输入数据的性质直接影响模型学习的倾向**。如果输入数据的性质/分布与预期的输出不匹配，模型学习效果就会变差。直接给MLP输入$(x, y, z, \theta, \phi)$，相邻位置变化不明显（慢变、低频），MLP就较难学好高频变化
+<center>
+<img src="E:/weapons/Graphics/src/research-paper/nerf-PE-1.png" width="50%"><br>
+<img src="E:/weapons/Graphics/src/research-paper/nerf-PE-2.png" width="50%">
+</center>
 
-### Hierarchical Sampling
+直观上，**DeepNet输入数据的性质直接影响模型学习的倾向**。如果输入数据的性质/分布与预期的输出不匹配，模型学习效果就会变差。直接给MLP输入$(x, y, z, \theta, \phi)$，相邻位置变化不明显（慢变、低频），MLP就较难学好高频变化。
 
+### Hierarchical Scene Representation
 
+射线上采样，采了很多"空气"，但很显然有物体的位置是更重要的，因此需要重要性采样。重要性采样也是Ray Tracing中的重要部分。
+
+在stratified sampling基础上，NeRF叠加了一种由粗到细的（coarse-to-fine）场景表示：训练coarse和fine两个场景表示网络。coarse network直接在射线上stratified sample $N_c$个点，计算渲染方程（$hat$表示模型输出）
+
+$$ \hat{C}_c(r) = \sum_{i=1}^{N_c} w_i c_i,
+\hspace{2pt} w_i = T_i(1 - e^{-\sigma_i \delta_i})
+$$
+将$\alpha_i = 1 - e^{-\sigma_i \delta_i}$和透射率$T_i$合并起来视为颜色的加权系数$w_i$，归一化后就得到在射线上的分段区间上的离散分布$\hat{w}_i = w_i / \sum_{j=1}^{N_c}$。然后用逆变换采样（inverse transform sampling），从分布$\hat{w}_i$上采样$N_f$个位置。$N_c$和$N_f$合并起来的所有位置送进fine network进行学习
+
+TODO：这里画一张图：射线 - 离散分布w_i 给一个最直观的印象
+
+直观上，采样的$N_f$个位置就是光路上存在物体或曾经存在物体的区域，反映了物体本身和遮挡，是重点训练的位置。
 
 ## Behind the Scenes (n7, e7, s8)
 
