@@ -8,7 +8,7 @@
 
 ## Transformation and Homogeneous coordinate
 
-**Prerequisite**：[Geometry of Linear Transformation](../Fundamental%20Calculus%20and%20Linear%20Algebra.md)，根据线性变换的本质快速确定变换矩阵
+**Prerequisite**：[Geometry of Linear Transformation](../Fundamental%20Mathematics.md#Geometry%20of%20Linear%20Transformation)，根据线性变换的本质快速确定变换矩阵
 
 ### Homogeneous coordinate
 
@@ -121,7 +121,7 @@ ModelView + Projection两种变换合称为MVP变换
 
 #### 证明：位姿矩阵就是换系（camera-to-ref）的变换矩阵
 
-**Prerequisite**：[Geometry of Linear Transformation](../Fundamental%20Calculus%20and%20Linear%20Algebra.md)
+**Prerequisite**：[Geometry of Linear Transformation](../Fundamental%20Mathematics.md#Geometry%20of%20Linear%20Transformation)
 
 线性变换矩阵$A$的核心点
 
