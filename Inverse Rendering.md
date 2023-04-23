@@ -1,0 +1,3 @@
+- 工程：数据，超参调整，解决一小类corner case的后处理
+- 创新：model和**loss**设计的motivation & insight. Significance: loss $\ge$ model
+- Score：创新性 or 启发性（novelty or inspiration），有效性（effectiveness），问题规模（scale）

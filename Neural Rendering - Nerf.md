@@ -1,3 +1,7 @@
+- 工程：数据，超参调整，解决一小类corner case的后处理
+- 创新：model和**loss**设计的motivation & insight. Significance: loss $\ge$ model
+- Score：创新性 or 启发性（novelty or inspiration），有效性（effectiveness），问题规模（scale）
+
 ## Research Groups
 
 
@@ -143,12 +147,12 @@ $[0, D]$上并非处处都有介质。类似裁剪空间的近平面和远平面
 $$ I(0) = I(D)e^{-\int_{t_n}^{t_f} \sigma(t)dt} +
 \int_{t_n}^{t_f} I_e(s)\sigma(s)e^{-\int_{t_n}^{s} \sigma(t)dt} ds $$
 
-Nerf忽略背景光$I(D)$项。记$T(s) = e^{-\int_{0}^s \sigma(t) dt}$，用颜色$c(s)$替换辐射强度，用参数方程$r(t) = o + td$表示射线（$o$为射线起点向量，$d$为射线方向向量），并考虑辐射场规定颜色与观测方向$d$有关
+Nerf忽略背景光$I(D)$项。记$T(s) = e^{-\int_{0}^s \sigma(t) dt}$，用颜色$c(s)$替换粒子群自发光辐射强度$I_e(s)$，参数方程$r(t) = o + td$表示射线（$o$为射线起点向量，$d$为射线方向向量），并考虑辐射场规定颜色与观测方向$d$有关
 
 $$ C(r) = \int_{t_n}^{t_f} c(r(t), d)T(t)\sigma(r(t)) dt, \hspace{2pt}
 T(t) = e^{-\int_{t_n}^t \sigma(r(s)) ds} \tag{Nerf-RE} $$
 
-这就是Nerf的渲染方程
+这就是Nerf paper中的渲染方程。由于颜色$c$是替换$I_e$而来，并且忽略了光源项，因此Nerf暗含**物体颜色源于自发光 + 环境光in-scatter的部分**。
 
 ### Riemann Sum (piecewise constant data)
 
