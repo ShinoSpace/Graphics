@@ -9,9 +9,9 @@
 - 每个问题都有什么解决方法（怎么干）
 - paper要解决什么问题，proposed method的motivation是什么（算者无用，道其中也）
 - 开始填坑
-    - 领域内哪些问题做了，哪些问题还没做（如果能解决，会是比较好的工作），哪些问题没做好
-    - 能否扩展别人的方法
-    - 目前的工作提出的解决方案对不对，有没有漏洞，能否提出一个新方法（A+B或是新的算法设计）克服已有工作的缺点？
+  - 领域内哪些问题做了，哪些问题还没做（如果能解决，会是比较好的工作），哪些问题没做好
+  - 能否扩展别人的方法
+  - 目前的工作提出的解决方案对不对，有没有漏洞，能否提出一个新方法（A+B或是新的算法设计）克服已有工作的缺点？
 - 更senior：挖坑
 
 ## Research Groups
@@ -22,11 +22,11 @@
 
 ### SOTA on Neural Rendering (2020.04)
 
-Paper: https://arxiv.org/pdf/2004.03805.pdf
+arxiv: https://arxiv.org/pdf/2004.03805.pdf
 
 ### Neural Radiance Fields in 3D Vision (2022.10)
 
-Paper: https://arxiv.org/pdf/2210.00379.pdf
+arxiv: https://arxiv.org/pdf/2210.00379.pdf
 
 ## Volume Rendering Fundamentals
 
@@ -48,25 +48,32 @@ A fragment shader：从相机光心出发，向图像上的像素点发射一条
 </center>
 
 > out-scattering：射线方向上的入射光碰撞粒子群后反射到非射线方向
+>
 > in-scattering：非射线方向的入射光碰撞粒子群后反射到射线方向
 
 ### Absorption (-)
 
 光沿射线方向传播，在$s$处碰到粒子群（介质），在此处取一底面积$A$，高$\Delta s \rightarrow 0$的圆柱体（微元）进行建模。设粒子体密度$\rho(s)$，粒子半径$r$。圆柱体内粒子总数为$\rho(s) A \Delta s$。由于$\Delta s \rightarrow 0$，可以认为所有粒子平铺在圆柱体内部，因此粒子群在圆柱底面上的投影面积为$\rho(s) A \Delta s \pi r^2$。那么光线经过$s$时，单位面积上将有$\rho(s) A \Delta s \pi r^2 / A$的概率碰到粒子，因此可得吸收方程
 
-$$ I(s + \Delta s) = I(s) - I(s)\rho(s) A \Delta s \pi r^2 / A,
-\hspace{2pt} \Delta s \rightarrow 0 $$
+$$
+I(s + \Delta s) = I(s) - I(s)\rho(s) A \Delta s \pi r^2 / A,
+\hspace{2pt} \Delta s \rightarrow 0
+$$
 
 定义$\sigma(s) = \rho(s) \pi r^2$，这是一个标准的一阶线性齐次微分方程
 
-$$ \begin{gather}
+$$
+\begin{gather}
 I(s + \Delta s) = I(s) \cdot \left( 1 - \sigma(s) \Delta s \right) \\[5pt]
 \frac{dI}{ds} = -I(s) \sigma(s)
-\end{gather} $$
+\end{gather}
+$$
 
 解得
 
-$$ I(b) = I(a)e^{-\int_a^b \sigma(t)dt} \tag{absorption} $$
+$$
+I(b) = I(a)e^{-\int_a^b \sigma(t)dt} \tag{absorption}
+$$
 
 #### Density and Transmittance
 
@@ -87,7 +94,9 @@ $$ I(b) = I(a)e^{-\int_a^b \sigma(t)dt} \tag{absorption} $$
 
 粒子群除了吸收光线，还可能自发光或将其他方向的光线反射到射线方向上
 
-$$ \frac{dI}{ds} = I_e(s)\sigma(s) $$
+$$
+\frac{dI}{ds} = I_e(s)\sigma(s)
+$$
 
 ### Rendering Equation (Max)
 
@@ -95,7 +104,9 @@ $$ \frac{dI}{ds} = I_e(s)\sigma(s) $$
 
 absorption和emission两部分的微元建模之和就是体渲染方程
 
-$$ \frac{dI}{ds} = -I(s)\sigma(s) + I_e(s)\sigma(s) $$
+$$
+\frac{dI}{ds} = -I(s)\sigma(s) + I_e(s)\sigma(s)
+$$
 
 这是一个一阶线性非齐次微分方程，需要定积分解，因此采用积分因子法求解
 
@@ -103,25 +114,29 @@ $$ \frac{dI}{ds} = -I(s)\sigma(s) + I_e(s)\sigma(s) $$
 
 积分因子 $= e^{\int_{0}^s \sigma(t)dt}$。设$g(s) = I_e(s) \sigma(s)$，相机与光源的直线距离为$D$。Max的求解目标是$I(D)$，积分下限为0上限为$D$
 
-$$ \begin{gather}
+$$
+\begin{gather}
 \left( \frac{dI}{ds} + I(s)\sigma(s) \right)e^{\int_{0}^s \sigma(t)dt} =
 I_e(s)\sigma(s)e^{\int_{0}^s \sigma(t)dt} \\[2pt]
 \int_{s=0}^{s=D} d(I(s)e^{\int_{0}^s \sigma(t)dt}) =
 \int_0^D g(s)e^{\int_{0}^s \sigma(t)dt} ds \\[2pt]
 I(D)e^{\int_{0}^D \sigma(t)dt} - I(0) = \int_0^D g(s)e^{\int_{0}^s \sigma(t)dt} ds
-\end{gather} $$
+\end{gather}
+$$
 
 渲染方程
 
-$$ I(D) = I(0)e^{-\int_{0}^D \sigma(t)dt} +
-\int_0^D I_e(s) \sigma(s)e^{-\int_s^D \sigma(t)dt} ds $$
+$$
+I(D) = I(0)e^{-\int_{0}^D \sigma(t)dt} +
+\int_0^D I_e(s) \sigma(s)e^{-\int_s^D \sigma(t)dt} ds
+$$
 
 ## Nerf (n10, i10, e9, s9)
 
-- Paper: [Neural Radiance Fields](./papers/NeRF.pdf)
-- Arxiv paper: https://arxiv.org/pdf/2003.08934.pdf
-- Code: https://github.com/bmild/nerf
-- Supplement material: [Volume Rendering Digest (for NeRF)](./papers/Nerf-supplement.pdf)
+- paper: [Neural Radiance Fields](./papers/NeRF.pdf)
+- arxiv: https://arxiv.org/pdf/2003.08934.pdf
+- code: https://github.com/bmild/nerf
+- supplement material: [Volume Rendering Digest (for NeRF)](./papers/Nerf-supplement.pdf)
 - Physical based Rendering Equation: [Optical Models for Direct Volume Rendering](https://courses.cs.duke.edu/spring03/cps296.8/papers/max95opticalModelsForDirectVolumeRendering.pdf)
 - Riemann Sum: [Volume Rendering Digest (for NeRF)](https://arxiv.org/pdf/2209.02417.pdf)
 
@@ -129,40 +144,52 @@ $$ I(D) = I(0)e^{-\int_{0}^D \sigma(t)dt} +
 
 相机光心为原点，坐标轴指向光源，$\Delta s > 0$时，absorption (+)，emission (-)。设相机光心到光源的直线距离为$D$，改写absorption和emission两个方程
 
-$$ \begin{gather}
+$$
+\begin{gather}
 \frac{dI}{ds} = I(s)\sigma(s) \tag{absorption} \\[5pt]
 \frac{dI}{ds} = -I_e(s)\sigma(s) \tag{emission}
-\end{gather} $$
+\end{gather}
+$$
 
 渲染方程的微分式
 
-$$ \frac{dI}{ds} - I(s)\sigma(s) = -I_e(s)\sigma(s) $$
+$$
+\frac{dI}{ds} - I(s)\sigma(s) = -I_e(s)\sigma(s)
+$$
 
 求解目标是$I(0)$，积分因子$= e^{-\int_{0}^s \sigma(t)dt}$，积分下限0，上限$D$
 
-$$ \begin{gather}
+$$
+\begin{gather}
 \left( \frac{dI}{ds} - I(s)\sigma(s) \right)e^{-\int_{0}^s \sigma(t)dt} =
 -I_e(s)\sigma(s)e^{-\int_{0}^s \sigma(t)dt} \\[2pt]
 \int_{s=0}^{s=D} d(I(s)e^{-\int_{0}^s \sigma(t)dt}) =
 -\int_0^D I_e(s)\sigma(s)e^{\int_{0}^s \sigma(t)dt} ds \\[2pt]
 I(D)e^{-\int_{0}^D \sigma(t)dt} - I(0) =
 -\int_0^D I_e(s)\sigma(s)e^{-\int_{0}^s \sigma(t)dt} ds
-\end{gather} $$
+\end{gather}
+$$
 
 渲染方程
 
-$$ I(0) = I(D)e^{-\int_{0}^D \sigma(t)dt} +
-\int_0^D I_e(s)\sigma(s)e^{-\int_{0}^s \sigma(t)dt} ds $$
+$$
+I(0) = I(D)e^{-\int_{0}^D \sigma(t)dt} +
+\int_0^D I_e(s)\sigma(s)e^{-\int_{0}^s \sigma(t)dt} ds
+$$
 
 $[0, D]$上并非处处都有介质。类似裁剪空间的近平面和远平面，定义射线上的近点$t_n$和远点$t_f$
 
-$$ I(0) = I(D)e^{-\int_{t_n}^{t_f} \sigma(t)dt} +
-\int_{t_n}^{t_f} I_e(s)\sigma(s)e^{-\int_{t_n}^{s} \sigma(t)dt} ds $$
+$$
+I(0) = I(D)e^{-\int_{t_n}^{t_f} \sigma(t)dt} +
+\int_{t_n}^{t_f} I_e(s)\sigma(s)e^{-\int_{t_n}^{s} \sigma(t)dt} ds
+$$
 
 Nerf忽略背景光$I(D)$项。记$T(s) = e^{-\int_{0}^s \sigma(t) dt}$，用颜色$c(s)$替换粒子群自发光辐射强度$I_e(s)$，参数方程$r(t) = o + td$表示射线（$o$为射线起点向量，$d$为射线方向向量），并考虑辐射场规定颜色与观测方向$d$有关
 
-$$ C(r) = \int_{t_n}^{t_f} c(r(t), d)T(t)\sigma(r(t)) dt, \hspace{2pt}
-T(t) = e^{-\int_{t_n}^t \sigma(r(s)) ds} \tag{Nerf-RE} $$
+$$
+C(r) = \int_{t_n}^{t_f} c(r(t), d)T(t)\sigma(r(t)) dt, \hspace{2pt}
+T(t) = e^{-\int_{t_n}^t \sigma(r(s)) ds} \tag{Nerf-RE}
+$$
 
 这就是Nerf paper中的渲染方程。由于颜色$c$是替换$I_e$而来，并且忽略了光源项，因此Nerf暗含**物体颜色源于自发光 + 环境光in-scatter的部分**。
 
@@ -172,10 +199,12 @@ T(t) = e^{-\int_{t_n}^t \sigma(r(s)) ds} \tag{Nerf-RE} $$
 
 $(\text{Nerf-RE})$式没有一般的解析表达，需要在路径上进行采样才能实现，因此需要将积分化为离散求和。离散化的原理非常简单，就是利用定积分的定义，将连续区间按一定间隔划分，然后用不带极限的离散求和近似
 
-$$ \int_{x_0}^{x_n} f(x)dx =
+$$
+\int_{x_0}^{x_n} f(x)dx =
 \sum_{i=0}^{n-1} \int_{x_i}^{x_{i + 1}} f(x)dx \approx
 \sum_{i=0}^{n-1} f(x_0 + i\Delta x_i)\Delta x_i, \hspace{2pt}
-\Delta x_i = x_{i+1} - x_i $$
+\Delta x_i = x_{i+1} - x_i
+$$
 
 积分形式的渲染方程和隐式的3D场景表示的最主要的优势是：**连续**的场景表示。如果每次都等间隔划分积分区间，子区间内固定采样位置（一般取区间端点或中点），用划分得到的这些矩形面积之和来近似渲染方程$(\text{Nerf-RE})$，会在两方面破坏连续性：
 
@@ -188,38 +217,52 @@ $$ \int_{x_0}^{x_n} f(x)dx =
 
 在$[t_n, \hspace{1pt} t_f]$上等间隔划分$N$个子区间，第$i$个子区间为$[t_n + \frac{i - 1}{N}(t_f - t_n), t_n + \frac{i}{N}(t_f - t_n)], \hspace{2pt} i=1, 2, ..., N$，但每个子区间内用均匀分布随机选取采样点
 
-$$ t_i \sim \mathcal{U} \hspace{1pt}
+$$
+t_i \sim \mathcal{U} \hspace{1pt}
 [t_n + \frac{i - 1}{N}(t_f - t_n), t_n + \frac{i}{N}(t_f - t_n)], \hspace{2pt}
-i=1, 2, ..., N $$
+i=1, 2, ..., N
+$$
 
 当迭代次数足够多时，离散求和就可以无限接近于积分结果，并且神经辐射场所有历史输入形成的空间无限逼近连续空间。$(\text{Nerf-RE})$在第$i$段区间$[t_i, \hspace{1pt} t_{i+1}]$内，$c$和$\sigma$都可近似为常数$c_i, \sigma_i$
 
-$$ C_i = \int_{t_i}^{t_{i+1}} c_i \sigma_i T(t) dt $$
+$$
+C_i = \int_{t_i}^{t_{i+1}} c_i \sigma_i T(t) dt
+$$
 
 但$T(t) = e^{-\int_{t_n}^t \sigma(r(s)) ds}$在区间内的变化量不可忽略，因此需要分为两部分
 
-$$ T(t) = e^{-\int_{t_n}^{t_i} \sigma(r(s)) ds} e^{-\int_{t_i}^{t} \sigma_i ds} $$
+$$
+T(t) = e^{-\int_{t_n}^{t_i} \sigma(r(s)) ds} e^{-\int_{t_i}^{t} \sigma_i ds}
+$$
 
 > $T(t) = e^{-\int_{t_n}^t \sigma(r(s)) ds}$在子区间内不能视为常数的原因是：$T(t)$是一个从$t_n$开始积分的积分上限函数，在$[t_i, \hspace{1pt} t_{i+1}]$内不满足积分中值定理
 
 这样乘积的后一项积分有解析表达，前一项就是$T(t_i)$
 
-$$ T(t) = T(t_i) e^{-\sigma_i(t - t_i)} $$
+$$
+T(t) = T(t_i) e^{-\sigma_i(t - t_i)}
+$$
 
 同理，$T(t_i)$也做分段离散化。记$\delta_i = t_{i + 1} - t_i$
 
-$$ T_i = e^{-\sum_{j=1}^{i-1}\int_{t_j}^{t_{j+1}}\sigma(t)dt} =
-e^{-\sum_{j=1}^{i-1} \sigma_j\delta_j} $$
+$$
+T_i = e^{-\sum_{j=1}^{i-1}\int_{t_j}^{t_{j+1}}\sigma(t)dt} =
+e^{-\sum_{j=1}^{i-1} \sigma_j\delta_j}
+$$
 
 上述结果带回$C_i$
 
-$$ C_i = c_i \sigma_i T_i \int_{t_i}^{t_{i + 1}} e^{-\sigma_i(t - t_i)} dt =
-c_i T_i \left(1 - e^{-\sigma_i \delta_i} \right) $$
+$$
+C_i = c_i \sigma_i T_i \int_{t_i}^{t_{i + 1}} e^{-\sigma_i(t - t_i)} dt =
+c_i T_i \left(1 - e^{-\sigma_i \delta_i} \right)
+$$
 
 所有$C_i$求和就是离散化的渲染方程
 
-$$ C = \sum_{i=1}^{N} T_i c_i (1 - e^{-\sigma_i \delta_i}), \hspace{3pt}
-\text{where} \hspace{3pt} T_i = e^{-\sum_{j=1}^{i-1} \sigma_j\delta_j} $$
+$$
+C = \sum_{i=1}^{N} T_i c_i (1 - e^{-\sigma_i \delta_i}), \hspace{3pt}
+\text{where} \hspace{3pt} T_i = e^{-\sum_{j=1}^{i-1} \sigma_j\delta_j}
+$$
 
 #### Consistency
 
@@ -246,7 +289,8 @@ $$ C = \sum_{i=1}^{N} T_i c_i (1 - e^{-\sigma_i \delta_i}), \hspace{3pt}
 
 在stratified sampling基础上，NeRF叠加了一种由粗到细的（coarse-to-fine）场景表示：训练coarse和fine两个场景表示网络。coarse network直接在射线上stratified sample $N_c$个点，计算渲染方程（$hat$表示模型预测值）
 
-$$ \hat{C}_c(r) = \sum_{i=1}^{N_c} w_i c_i,
+$$
+\hat{C}_c(r) = \sum_{i=1}^{N_c} w_i c_i,
 \hspace{2pt} w_i = T_i(1 - e^{-\sigma_i \delta_i})
 $$
 
@@ -258,9 +302,9 @@ $$
 
 ## Behind the Scenes (n7, e7, s8)
 
-- Arxiv paper: https://arxiv.org/pdf/2301.07668.pdf
-- Code: https://github.com/Brummi/BehindTheScenes
-- Groups: 慕尼黑工业大学（TUM）
+- arxiv: https://arxiv.org/pdf/2301.07668.pdf
+- code: https://github.com/Brummi/BehindTheScenes
+- group: 慕尼黑工业大学（TUM）
 
 ### Problems
 
@@ -279,28 +323,28 @@ $$
 
 1. occupancy仍然使用神经辐射场，没有盲目将隐式表示换为网格表示
 
-隐式表示的最大优势就是连续性。神经辐射场隐式表示连续的3D场景空间，常规的occupancy grid可以直接采样神经辐射场生成。直接在occupancy grid上进行体渲染不是最优解
+    隐式表示的最大优势就是连续性。神经辐射场隐式表示连续的3D场景空间，常规的occupancy grid可以直接采样神经辐射场生成。直接在occupancy grid上进行体渲染不是最优解
 
 2. 颜色不必预测，可以复用视角相似的图像
 
-这一点是比较显然的，只要视角相差不大，颜色差别很小，通过pose直接投影取值即可
+    这一点是比较显然的，只要视角相差不大，颜色差别很小，通过pose直接投影取值即可
 
 3. Per-pixel reprojection loss能够自适应地处理遮挡问题
 
-训练时选取$k$张「参考图」取颜色，在新视角下分别渲染出$k$张图。计算损失时，只让取到正确颜色的pixel对训练有贡献，完成这件事的方法是*per-pixel minmum*：$k$张渲染出的图与监督图像分别计算逐像素的loss（不做reduction），在$(u, v)$位置的像素有$k$个loss，最小的loss对参数优化产生贡献。这种方法自适应地处理了遮挡问题
+    训练时选取$k$张「参考图」取颜色，在新视角下分别渲染出$k$张图。计算损失时，只让取到正确颜色的pixel对训练有贡献，完成这件事的方法是*per-pixel minmum*：$k$张渲染出的图与监督图像分别计算逐像素的loss（不做reduction），在$(u, v)$位置的像素有$k$个loss，最小的loss对参数优化产生贡献。这种方法自适应地处理了遮挡问题
 
-<center>
-<img src="E:/weapons/Graphics/src/research/per-pixel_reproj_loss.png" width="65%">
-</center>
+    <center>
+    <img src="E:/weapons/Graphics/src/research/per-pixel_reproj_loss.png" width="65%">
+    </center>
 
-这个损失函数源于[Monodepth2 (ICCV19)](./papers/monodepth2-ssl.pdf)，这个工作用自监督学习做训练，在当时是非常超前的
+    这个损失函数源于[Monodepth2 (ICCV19)](./papers/monodepth2-ssl.pdf)，这个工作用自监督学习做训练，在当时是非常超前的
 
-<center>
-<img src="E:/weapons/Graphics/src/research/monodepth2.png" width="65%">
-</center>
+    <center>
+    <img src="E:/weapons/Graphics/src/research/monodepth2.png" width="65%">
+    </center>
 
 4. density必须抑制错误的颜色
 
-<center>
-<img src="E:/weapons/Graphics/src/research/behind-the-scene.png" width="30%">
-</center>
+    <center>
+    <img src="E:/weapons/Graphics/src/research/behind-the-scene.png" width="30%">
+    </center>

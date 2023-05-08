@@ -138,11 +138,15 @@ ModelView + Projection两种变换合称为MVP变换
 
 **我们需要一个中间坐标系$S^{\prime}$来处理平移**：$S^{\prime}$与$D$的原点重合，基向量与$S$相同。需要这个中间系的原因是：只有当两个系的轴平行时，同一个**向量**在这两个系中的坐标才是相同的。用三角形法则处理平移，将点的坐标从$S$转到$S^{\prime}$下
 
-$$P_{S^{\prime}} = P_S + t$$
+$$
+P_{S^{\prime}} = P_S + t
+$$
 
 $S^{\prime} \rightarrow D$的换系是一个线性变换（旋转）：找到$S^{\prime}$的基向量在$D$下的坐标表示$i^{\prime}, j^{\prime}, k^{\prime}$即得变换矩阵$R=(i^{\prime}, j^{\prime}, k^{\prime})$
 
-$$ P_D = RP_{S^{\prime}} = RP_S + Rt$$
+$$
+P_D = RP_{S^{\prime}} = RP_S + Rt
+$$
 
 现在是关键，有三件重要的事：
 
@@ -154,7 +158,9 @@ c. 相机坐标系$S$的基向量与中间坐标系$S^{\prime}$的基向量相�
 
 一般情况下，**当提及相机的Pose时，默认说的是从相机坐标系换到参考坐标系（camera-to-ref）的变换矩阵**，对应变换方程
 
-$$ P_{ref} = T_{rc}P_{cam}$$
+$$
+P_{ref} = T_{rc}P_{cam}
+$$
 
 #### MV变换与Pose的关系
 
@@ -195,7 +201,8 @@ $$ P_{ref} = T_{rc}P_{cam}$$
 
 标准做法：相机在标准位置，model包含在$[l, r] \times [b, t] \times [f, n]$的立方体内。将该立方体中心平移到原点，然后scale到$[-1, 1]^3$。变换矩阵记为$M_{ortho}$
 
-$$ M_{ortho} = \underbrace{\begin{pmatrix}
+$$
+M_{ortho} = \underbrace{\begin{pmatrix}
 \frac{2}{r - l} & 0 & 0 & 0 \\
 0 & \frac{2}{t - b} & 0 & 0 \\
 0 & 0 & \frac{2}{n - f} & 0 \\
@@ -236,7 +243,8 @@ $$
 
 因此目标是寻找映射关系
 
-$$ \begin{pmatrix}
+$$
+\begin{pmatrix}
 x \\ y \\ z \\ 1
 \end{pmatrix} \rightarrow
 \begin{pmatrix}
@@ -248,7 +256,8 @@ $$
 
 如果直接将上式转化为矩阵形式
 
-$$ \begin{pmatrix}
+$$
+\begin{pmatrix}
 nx/z \\ ny/z \\ unknown \\ 1
 \end{pmatrix}
 = \begin{pmatrix}
@@ -263,7 +272,8 @@ $$
 
 由于目前还不知道$z \rightarrow z^{\prime}$的映射关系，因此变换矩阵的第三行元素、输出$z^{\prime}$暂时用问号代替。等式左侧利用任意齐次坐标的性质：乘以任意不为0的常数，表示的点不变
 
-$$ \begin{gather}
+$$
+\begin{gather}
 \begin{pmatrix}
 x \\ y \\ z \\ 1
 \end{pmatrix} \rightarrow
@@ -290,7 +300,8 @@ $$
 
 对输出的齐次坐标乘以$z$的更深层原因是：变换矩阵应与输入无关，即：对不同输入，变换矩阵应该是恒定的。因此下面的变换矩阵是欠妥的
 
-$$ \begin{pmatrix}
+$$
+\begin{pmatrix}
 nx/z \\ ny/z \\ unknown \\ 1
 \end{pmatrix}
 = \begin{pmatrix}
@@ -316,7 +327,8 @@ $$
 
 限定以上三条规则后，挤压方法唯一，根据待定系数确定矩阵的第三行
 
-$$ \begin{gather}
+$$
+\begin{gather}
 \begin{pmatrix}
 ? & ? & ? & ?
 \end{pmatrix} \begin{pmatrix}
@@ -341,7 +353,8 @@ $$
 
 解得$A = n + f, \hspace{2pt} B = -nf$，变换矩阵即为
 
-$$ M_{persp\rightarrow ortho} = \begin{pmatrix}
+$$
+M_{persp\rightarrow ortho} = \begin{pmatrix}
 n & 0 & 0 & 0 \\
 0 & n & 0 & 0 \\
 0 & 0 & n + f & -nf \\
@@ -357,7 +370,8 @@ $$
 
 将变为cuboid的视锥进行正交投影，就是完整的透视投影
 
-$$ M_{persp} = M_{ortho}M_{persp \rightarrow ortho} = \begin{pmatrix}
+$$
+M_{persp} = M_{ortho}M_{persp \rightarrow ortho} = \begin{pmatrix}
 \frac{2}{r - l} & 0 & 0 & -\frac{r + l}{r - l} \\
 0 & \frac{2}{t - b} & 0 & -\frac{t + b}{t - b} \\
 0 & 0 & \frac{2}{n - f} & -\frac{n + f}{n - f} \\
@@ -378,7 +392,9 @@ $$
 
 MVP变换过程：MV变换（从任意参考系换到相机坐标系下）-> 透视投影（挤压frustum）-> 正交投影
 
-$$ M_{MVP} = M_{ortho}M_{persp \rightarrow ortho}M_{view} $$
+$$
+M_{MVP} = M_{ortho}M_{persp \rightarrow ortho}M_{view}
+$$
 
 ### Viewport Transform
 
@@ -406,7 +422,8 @@ $$ M_{MVP} = M_{ortho}M_{persp \rightarrow ortho}M_{view} $$
 
 不难写出视口变换矩阵
 
-$$ M_{vp} = \underbrace{\begin{pmatrix}
+$$
+M_{vp} = \underbrace{\begin{pmatrix}
 width / 2 & 0 & 0 & 0 \\
 0 & height / 2 & 0 & 0 \\
 0 & 0 & 1 & 0 \\
@@ -430,7 +447,8 @@ $$
 
 透视除法可以放在最后
 
-$$ \begin{gather}
+$$
+\begin{gather}
 M = M_{vp}M_{ortho}M_{persp \rightarrow ortho}M_{view} \\[5pt]
 P_{screen} = \frac{1}{w}MP_{model}
 \end{gather}
@@ -470,7 +488,8 @@ Corner case: 点落在三角形边上，图形学里不做统一定义，自行�
 
 在实际光栅化计算时，三角形顶点为三维向量，像素中心坐标为二维向量，计算叉积时只需要drop $z$ or 赋任意值，因为叉积结果的$z$与输入向量的$z$无关。Here's the proof
 
-$$ \vec{a} \times \vec{b} = \begin{vmatrix}
+$$
+\vec{a} \times \vec{b} = \begin{vmatrix}
 \vec{i} & \vec{j} & \vec{k} \\
 x_1 & y_1 & z_1 \\
 x_2 & y_2 & z_2
@@ -479,7 +498,9 @@ $$
 
 判断像素中心是否在三角形内部，只需判断两个向量叉积结果的$z$坐标是否同号即可，因此对上式按第一行展开，只取$\vec{k}$项
 
-$$ z = (x_1 y_2 - x_2 y_1) \vec{k} $$
+$$
+z = (x_1 y_2 - x_2 y_1) \vec{k}
+$$
 
 无论从结果还是展开过程上看，$z$坐标与原始向量$\vec{a}, \vec{b}$的$z_1, z_2$无关，因此可以给$z_1, z_2$赋任意值，或更简单，直接根据上式计算$x_1 y_2 - x_2 y_1$，判断符号即可。
 
@@ -614,7 +635,9 @@ Blinn-Phong是基础的光线反射模型，主要建模镜面高光和漫反射
 
 一般将光源视为点光源，光的传播面是一个球面，球面上光强均匀分布。光源功率一定，在球面上的能量（光强在球上的面积分）就是固定的，由此可推出任意距光源$r$处的光照强度$I_r$
 
-$$I \cdot 4\pi = I_r \cdot 4 \pi r^2 \Rightarrow I_r = I / r^2$$
+$$
+I \cdot 4\pi = I_r \cdot 4 \pi r^2 \Rightarrow I_r = I / r^2
+$$
 
 $I$为单位距离$r=1$处的光强
 
@@ -631,7 +654,9 @@ $I$为单位距离$r=1$处的光强
 
 除光源外，物体表面接受的入射光总量也会影响反射光强。正式的说法是：当光源强度一定时，物体表面漫反射的反射光强与入射光强正相关。Lambert's law证明，单位面积接收的光强正比于入射角的余弦
 
-$$I_{rec} \propto \cos \theta = n \cdot l$$
+$$
+I_{rec} \propto \cos \theta = n \cdot l
+$$
 
 <center>
 <img src="E:/Weapons/Graphics/src/games101/rendering/blinn-phong_diffusion_lambert_law.png" width="50%">
@@ -641,7 +666,9 @@ $$I_{rec} \propto \cos \theta = n \cdot l$$
 
 反射光需要同时考虑入射光和物体表面材质对不同频率的光的吸收率，并且光源只能出现在反射面的上半部分（$0\degree \leq$ 入射角 $< 90\degree$）
 
-$$L_d = k_d (I / r^2) \max(0, n \cdot l)$$
+$$
+L_d = k_d (I / r^2) \max(0, n \cdot l)
+$$
 
 <center>
 <img src="E:/Weapons/Graphics/src/games101/rendering/blinn-phong_lambertian_diffuse_shading.png" width="50%">
@@ -663,13 +690,17 @@ $$L_d = k_d (I / r^2) \max(0, n \cdot l)$$
 
 直接求解镜面反射方向难度并不大：设沿镜面反射方向的单位向量为$r$。$l + r$的方向与$n$相同，$l, r$长度相等，那么$l, r, k*n \hspace{3pt} (k \in R)$就能构成一个等腰三角形
 
-$$2(l \cdot n)n = l + r \Rightarrow r = 2(l \cdot n)n - l$$
+$$
+2(l \cdot n)n = l + r \Rightarrow r = 2(l \cdot n)n - l
+$$
 
 可以验证这个结果的正确性：入射角与反射角相等，因此应有$r\cdot n$等于$l\cdot n$，简单计算$r\cdot n$即可验证等式成立。
 
 将Blinn-Phong镜面反射的$n \cdot h$替换为$v \cdot r$即得Phong模型的镜面反射项
 
-$$L_s = k_s(I / r^2)\max (0, v\cdot r)^p$$
+$$
+L_s = k_s(I / r^2)\max (0, v\cdot r)^p
+$$
 
 #### Ambient light
 
@@ -777,7 +808,8 @@ Assume：
 
 三维场景空间下的$\alpha, \beta, \gamma$是真实的插值系数，目标是寻找二维屏幕空间下的插值系数$\alpha^{\prime}, \beta^{\prime}, \gamma^{\prime}$与$\alpha, \beta, \gamma$的关系。两个空间下的插值方程：
 
-$$ \begin{gather}
+$$
+\begin{gather}
 P^{\prime} = \alpha^{\prime} A^{\prime} + \beta^{\prime} B^{\prime} + \gamma^{\prime} C^{\prime} \\[5pt]
 P = \alpha A + \beta B + \gamma C
 \end{gather}
@@ -785,7 +817,8 @@ $$
 
 对上式应用MVP变换，但不包含透视除法。注意，所有点都用非齐次坐标表示，MVP时需要显式转换为齐次坐标
 
-$$ M \begin{pmatrix}
+$$
+M \begin{pmatrix}
 P \\ 1
 \end{pmatrix} = \alpha M \begin{pmatrix}
 A \\ 1
@@ -798,7 +831,8 @@ $$
 
 这种表示促使我们将上式更细粒度地展开
 
-$$ \begin{gather}
+$$
+\begin{gather}
 \begin{pmatrix}
 x_P^{\prime} w_P \\ y_P^{\prime} w_P \\ z_P^{\prime} w_P \\ w_P
 \end{pmatrix} = \alpha \begin{pmatrix}
@@ -814,7 +848,8 @@ $$
 
 回顾透视投影，再次强调$w_* = z_*$的物理意义：**透视投影后的$w$等于投影前的深度$z$**。从上式中拆解出$x, y$维度和$w$维度，就能找到二维屏幕空间和三维场景空间下插值系数的关系
 
-$$ \begin{gather}
+$$
+\begin{gather}
 w_P \begin{pmatrix}
 x_P^{\prime} \\ y_P^{\prime}
 \end{pmatrix} = \alpha w_A \begin{pmatrix}
@@ -839,7 +874,8 @@ $$
 
 $(\mathrm{PCI} \text{-} 2)$带入$(\mathrm{PCI} \text{-} 1)$，与$(\mathrm{PCI} \text{-} 3)$对比即得矫正关系
 
-$$ \begin{gather}
+$$
+\begin{gather}
 \alpha^{\prime} = \frac{\alpha w_A}{\alpha w_A + \beta w_b + \gamma w_c} \\[2ex]
 \beta^{\prime} = \frac{\beta w_B}{\alpha w_A + \beta w_b + \gamma w_c} \\[2ex]
 \gamma^{\prime} = \frac{\gamma w_C}{\alpha w_A + \beta w_b + \gamma w_c}
@@ -848,7 +884,8 @@ $$
 
 这个关系是正确的，满足约束条件$\alpha^{\prime} + \beta^{\prime} + \gamma^{\prime} = 1$。最终目标是将$\alpha^{\prime}, \beta^{\prime}, \gamma^{\prime}$的值修正为$\alpha, \beta, \gamma$。利用约束关系$\alpha + \beta + \gamma = 1$反解上式
 
-$$ \begin{gather}
+$$
+\begin{gather}
 \alpha = \frac{\alpha^{\prime} w_P}{w_A}, \beta = \frac{\beta^{\prime} w_P}{w_B}, \gamma = \frac{\gamma^{\prime} w_P}{w_C} \\[5pt]
 \alpha + \beta + \gamma = 1 \Rightarrow \frac{1}{w_P} = \frac{\alpha^{\prime}}{w_A} + \frac{\beta^{\prime}}{w_B} + \frac{\gamma^{\prime}}{w_C} \tag{D-interp} \\[5px]
 \alpha = \frac{\alpha^{\prime} / w_A}{\alpha^{\prime} / w_A + \beta^{\prime} / w_B + \gamma^{\prime} / w_C}, \hspace{5px}
@@ -865,7 +902,8 @@ $(\mathrm{PCI})$式将二维屏幕空间下的插值系数矫正为三维场景�
 
 proof. 设三角形所在平面方程为$Ax + By + Cz + D = 0$（注意这里$A, B, C, D \in R$，不是三角形顶点）。三角形顶点坐标为$(x_i, y_i, z_i), \hspace{2px} i = 1, 2, 3$。目标是检查在三维空间插值后的点$P(x, y, z)$是否落在三角形所在平面上。如果$P$仍在平面上，则说明深度插值得到的就是真实深度
 
-$$ \begin{gather}
+$$
+\begin{gather}
 \begin{pmatrix}
 x \\ y \\ z
 \end{pmatrix} = \alpha \begin{pmatrix}
@@ -881,7 +919,9 @@ $$
 
 考虑到有方程$Ax_i + By_i + Cz_i + D = 0$，对第二个方程按该模式重排
 
-$$\alpha(Ax_1 + By_1 + Cz_1) + \beta(Ax_2 + By_2 + Cz_2) + \gamma (Ax_3 + By_3 + Cz_3) + D = -D(\alpha + \beta + \gamma) + D \equiv 0$$
+$$
+\alpha(Ax_1 + By_1 + Cz_1) + \beta(Ax_2 + By_2 + Cz_2) + \gamma (Ax_3 + By_3 + Cz_3) + D = -D(\alpha + \beta + \gamma) + D \equiv 0
+$$
 
 这里再次用了约束条件$\alpha + \beta + \gamma = 1$。因此插值后的$P$点就在平面上。这证明对于任意几何**平面**，都能通过方程$(\mathrm{PCI} \text{-} 2)$和$(\mathrm{D} \text{-} \mathrm{interp})$进行插值，得到正确的深度解。Q.E.D.
 
