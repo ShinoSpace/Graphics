@@ -30,11 +30,20 @@ def pose_spherical(theta, phi, radius):
     """ compute pose matrix (camera to world), camera is under spherical coordinate
         where pose is expressed by (r, theta, phi)
 
+        this wiki tells the notation definition of spherical coordinate system:
+        https://en.wikipedia.org/wiki/Spherical_coordinate_system
+        but it seems not be used here
+
+        angle range:
+        - theta: [-180, 180]
+        - phi: [-90, 90]
+
         Process: Ps -> Ps + t -> Pw = R(Ps + t)
     """
     c2w = trans_t(radius)
     c2w = rot_phi(phi / 180. * np.pi) @ c2w
     c2w = rot_theta(theta / 180. * np.pi) @ c2w
+    #^ [x, y, z, 1]^T -> [-x, z, y, 1]
     c2w = torch.Tensor(np.array([[-1,0,0,0],[0,0,1,0],[0,1,0,0],[0,0,0,1]])) @ c2w
     return c2w
 
@@ -73,8 +82,9 @@ def load_blender_data(basedir, half_res=False, testskip=1):
     imgs = np.concatenate(all_imgs, 0)
     poses = np.concatenate(all_poses, 0)
     
-    #^ use camera fov and image size to compute focal length in pixel
-    #^ in graphics, assume the fov triangle is symmetry
+    #^ compute focal length in pixel by camera fov and image size
+    #^ in CG, we assume the fov triangle is symmetry
+    #^ i.e. the optical center is at the center of image
     H, W = imgs[0].shape[:2]
     camera_angle_x = float(meta['camera_angle_x'])
     focal = .5 * W / np.tan(.5 * camera_angle_x)
