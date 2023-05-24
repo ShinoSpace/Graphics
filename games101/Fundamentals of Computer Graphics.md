@@ -27,9 +27,9 @@
 
   为什么这样定义向量和点？-> 保证运算结果与定义的一致性！
 
-  - vector + vector = vector：常规向量加法，得到和向量，最后一维恒为0<br>
-  - point - point = vector: 终点B - 起点A，得到向量$\overrightarrow{AB}$<br>
-  - point + vector = point: 求和后最后一维为1，说明结果是一个点的坐标。几何意义：从给定点出发，沿向量方向行走向量长度距离，到达另一点。<br>
+  - vector + vector = vector：常规向量加法，得到和向量，最后一维恒为0
+  - point - point = vector: 终点B - 起点A，得到向量$\overrightarrow{AB}$
+  - point + vector = point: 求和后最后一维为1，说明结果是一个点的坐标。几何意义：从给定点出发，沿向量方向行走向量长度距离，到达另一点。
   - point + point: 直观上没有意义。在齐次坐标下扩充定义。
 
 - 点的扩充定义
@@ -176,6 +176,10 @@ $$
 
 - MV变换：从结果上看，相当于进行了换系，从参考坐标系换到相机坐标系。原先已知的是任意点在参考坐标系下的坐标。MV变换后，相机坐标系与参考坐标系重合，所有点的坐标处于相机坐标系下
 - Pose就是在换系：从相机坐标系换到参考坐标系
+
+### Digression: 四元数
+
+- reference: [quaternion](../materials/quaternion.pdf)
 
 ### Projection Transformation: prepare for projection
 
