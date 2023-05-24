@@ -28,7 +28,7 @@ A fragment shader：从相机光心出发，向图像上的像素点发射一条
 体渲染模型将光线与粒子群的作用分为absorb, emission和scatter，scatter又分为in scatter和out scatter，所有部分求和就是volume rendering equation。Nerf的体渲染方程只考虑absorb和emission，忽略scatter
 
 <center>
-<img src="E:/weapons/Graphics/src/research/volume_rendering_buildup.png" width="50%">
+<img src="E:/weapons/Graphics/images/research/volume_rendering_buildup.png" width="50%">
 </center>
 
 > out-scattering：射线方向上的入射光碰撞粒子群后反射到非射线方向
@@ -69,7 +69,7 @@ $$
 与透明度正好相反，不透明度**opacity** $= 1 - T(a \rightarrow b)$。不透明度越大，光线保留的越少，对应的颜色分量贡献越少（光线只有**透过**物体才能被观察到）
 
 <center>
-<img src="E:/weapons/Graphics/src/research/nerf_opacity_PDF.png" width="50%">
+<img src="E:/weapons/Graphics/images/research/nerf_opacity_PDF.png" width="50%">
 </center>
 
 若粒子群是均匀的（$\text{i.e.} \hspace{2pt} \sigma(s) = constant$），光的辐射强度呈指数衰减，这种特殊情况称为比尔-朗伯吸收定律（Beer-Lambert law）
@@ -261,15 +261,15 @@ $$
 [Spectral Bias](https://arxiv.org/pdf/1806.08734.pdf), [Frequency Bias](https://arxiv.org/pdf/2003.04560.pdf), [Fourier Features](https://arxiv.org/pdf/2006.10739.pdf)等理论工作证明：如果不施加外力，Deep Networks**倾向于**学出一个低频函数（low frequency function），但只是**倾向**，这可以看作是Deep Network的一个先验。如果将输入用一个高频函数映射到高维空间（位置编码就是一种高频函数），MLP同样可以学习高频信息
 
 <center>
-<img src="E:/weapons/Graphics/src/research/nerf-PE-1.png" width="50%"><br>
-<img src="E:/weapons/Graphics/src/research/nerf-PE-2.png" width="50%">
+<img src="E:/weapons/Graphics/images/research/nerf-PE-1.png" width="50%"><br>
+<img src="E:/weapons/Graphics/images/research/nerf-PE-2.png" width="50%">
 </center>
 
 直观上，**DeepNet输入数据的性质直接影响模型学习的倾向**。如果输入数据的性质/分布与预期的输出不匹配，模型学习效果就会变差。直接给MLP输入$(x, y, z, \theta, \phi)$，相邻位置变化不明显（慢变、低频），MLP就较难学好高频变化。
 
 ### Hierarchical Scene Representation
 
-射线上采样，采了很多"空气"，但很显然有物体的位置是更重要的，因此需要重要性采样。重要性采样也是Ray Tracing中的重要部分。
+射线上采样，采了很多空气，但很显然有物体的位置是更重要的，因此需要重要性采样。重要性采样也是Ray Tracing中的重要部分。
 
 在stratified sampling基础上，NeRF叠加了一种由粗到细的（coarse-to-fine）场景表示：训练coarse和fine两个场景表示网络。coarse network直接在射线上stratified sample $N_c$个点，计算渲染方程（$hat$表示模型预测值）
 
@@ -278,11 +278,21 @@ $$
 \hspace{2pt} w_i = T_i(1 - e^{-\sigma_i \delta_i})
 $$
 
-将$\alpha_i = 1 - e^{-\sigma_i \delta_i}$和透射率$T_i$合并起来视为颜色的加权系数$w_i$，归一化后就得到在射线上的分段区间上的离散分布$\hat{w}_i = w_i / \sum_{j=1}^{N_c}$（$\hat{w}_i$就类似于alpha compositing的加权系数）。用逆变换采样（Inverse Transform Sampling）根据分布$\hat{w}_i$再采样$N_f$个位置。$N_c + N_f$送进fine network进行学习
+这里将渲染方程看作光路上所有采样位置颜色的加权和，权重$w_i$为$\alpha_i = 1 - e^{-\sigma_i \delta_i}$与透射率$T_i$的乘积，但权重不满足归一化条件$\sum_i w_i = 1$，因此再做一步归一化就得到在光路上划分的分段区间上的离散分布$\hat{w}_i = w_i / \sum_{j=1}^{N_c}$（$\hat{w}_i$就类似于alpha compositing的加权系数）。用逆变换采样（Inverse Transform Sampling）根据分布$\hat{w}_i$再采样$N_f$个位置。无论这些位置上是否有物体，都是重点学习的区域（有物体，肯定要多学。没物体，说明是个错误的预测，更要着重学，相当于hard negative mining）。$N_c + N_f$送进fine network进行学习。
 
 > 逆变换采样：[Inverse Transform Sampling](./Fundamental%20Mathematics.md#Inverse%20Transform%20Sampling)
 
 直观上，Inverse Transform Sampling采样的$N_f$个位置就是光路上存在物体的区域，是需要重点训练的位置，因此设置$N_f > N_C$。
+
+### NeRF的问题
+
+#### 光路独立，同一个物体不同光路缺乏关联性
+
+同一个物体，距离较近的光路与物体的碰撞点之间缺乏关联。直觉上，物体上相近的两个点在camera下的depth有可能非常接近。
+
+#### 神经辐射场的信息复合度较高，训练困难
+
+神经辐射场中同时隐式地存储了材质密度（density）、颜色，并且为了表示3D场景，很可能需要一些辅助信息。
 
 ## Behind the Scenes (n7, e7, s8)
 
@@ -318,17 +328,17 @@ $$
     训练时选取$k$张「参考图」取颜色，在新视角下分别渲染出$k$张图。计算损失时，只让取到正确颜色的pixel对训练有贡献，完成这件事的方法是*per-pixel minmum*：$k$张渲染出的图与监督图像分别计算逐像素的loss（不做reduction），在$(u, v)$位置的像素有$k$个loss，最小的loss对参数优化产生贡献。这种方法自适应地处理了遮挡问题
 
     <center>
-    <img src="E:/weapons/Graphics/src/research/per-pixel_reproj_loss.png" width="65%">
+    <img src="E:/weapons/Graphics/images/research/per-pixel_reproj_loss.png" width="65%">
     </center>
 
     这个损失函数源于[Monodepth2 (ICCV19)](./papers/monodepth2-ssl.pdf)，这个工作用自监督学习做训练，在当时是非常超前的
 
     <center>
-    <img src="E:/weapons/Graphics/src/research/monodepth2.png" width="65%">
+    <img src="E:/weapons/Graphics/images/research/monodepth2.png" width="65%">
     </center>
 
 4. density必须抑制错误的颜色
 
     <center>
-    <img src="E:/weapons/Graphics/src/research/behind-the-scene.png" width="30%">
+    <img src="E:/weapons/Graphics/images/research/behind-the-scene.png" width="30%">
     </center>

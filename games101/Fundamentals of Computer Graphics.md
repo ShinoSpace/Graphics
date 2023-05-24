@@ -41,7 +41,7 @@
 ### 旋转方向的选取对旋转矩阵的影响
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/rigid%20transform/rotation_angle.png" width="50%">
+<img src="E:/Weapons/Graphics/images/games101/rigid%20transform/rotation_angle.png" width="50%">
 </center>
 
 - Why $R_y(\alpha)$ (rotate around the y-axis) is different?
@@ -62,7 +62,7 @@
 proof:
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/rigid%20transform/Rodrigues_rotation_proof_0.png" width="28%"><img src="E:/Weapons/Graphics/src/games101/rigid%20transform/Rodrigues_rotation_proof_1.png" width="32.6%"><img src="E:/Weapons/Graphics/src/games101/rigid%20transform/Rodrigues_rotation_proof_2.png" width="36%">
+<img src="E:/Weapons/Graphics/images/games101/rigid%20transform/Rodrigues_rotation_proof_0.png" width="28%"><img src="E:/Weapons/Graphics/images/games101/rigid%20transform/Rodrigues_rotation_proof_1.png" width="32.6%"><img src="E:/Weapons/Graphics/images/games101/rigid%20transform/Rodrigues_rotation_proof_2.png" width="36%">
 </center>
 
 Assume:
@@ -96,7 +96,7 @@ ModelView + Projection两种变换合称为MVP变换
 相对运动：**如果相机和物体、场景不发生相对运动，那么无论怎么移动、旋转，拍出来的东西都是一模一样的**。那么干脆将相机（坐标系）移动到一个标准位置，方便分析问题。
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/MVP%20Transform/camera_pose.png" width="50%">
+<img src="E:/Weapons/Graphics/images/games101/MVP%20Transform/camera_pose.png" width="50%">
 </center>
 
 **ModelView Transformation**：**我们站在标准坐标系下**（上图$X$-$Y$-$Z$坐标系）
@@ -108,7 +108,7 @@ ModelView + Projection两种变换合称为MVP变换
 所有物体也同时进行上述变换，将上述变换矩阵记为$M_{view}$
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/MVP%20Transform/camera_pose_matrix.png" width="50%">
+<img src="E:/Weapons/Graphics/images/games101/MVP%20Transform/camera_pose_matrix.png" width="50%">
 </center>
 
 ### Digression: SLAM和多视图几何中的「换系」和 「位姿（Pose）」
@@ -133,7 +133,7 @@ ModelView + Projection两种变换合称为MVP变换
 在参考坐标系$D$（目标系，当前视角）下观察相机坐标系$S$的三个轴。整个坐标变换过程涉及：平移 + 线性变换下的换系，后者要求两个系的坐标原点必须重合。因此，先平移后换系更直观
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/MVP%20Transform/slam_coord_sys_transform.png" width="50%">
+<img src="E:/Weapons/Graphics/images/games101/MVP%20Transform/slam_coord_sys_transform.png" width="50%">
 </center>
 
 **我们需要一个中间坐标系$S^{\prime}$来处理平移**：$S^{\prime}$与$D$的原点重合，基向量与$S$相同。需要这个中间系的原因是：只有当两个系的轴平行时，同一个**向量**在这两个系中的坐标才是相同的。用三角形法则处理平移，将点的坐标从$S$转到$S^{\prime}$下
@@ -188,7 +188,7 @@ $$
 注意：本节中的所有投影变换本身并未做投影这件事（投影是要降维的），而是**为投影做准备**：将model变换到标准立方体$[-1, 1]^3$内
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/MVP%20Transform/projection_range_[near,%20far].png" width="50%">
+<img src="E:/Weapons/Graphics/images/games101/MVP%20Transform/projection_range_[near,%20far].png" width="50%">
 </center>
 
 - 为什么变换到$[-1, 1]^3$而没有直接drop $z$
@@ -238,7 +238,7 @@ $$
 视锥内任一点$(x, y, z)$，投影到近平面上的位置容易找到：相似三角形即可
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/MVP%20Transform/persepective_projection_similar_triangle.png" width="50%">
+<img src="E:/Weapons/Graphics/images/games101/MVP%20Transform/persepective_projection_similar_triangle.png" width="50%">
 </center>
 
 $$
@@ -405,7 +405,7 @@ $$
 先定义屏幕（screen）：像素定义为内部颜色不会发生变化的小方块（pixel square）
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/screen_def.png" width="50%">
+<img src="E:/Weapons/Graphics/images/games101/screen_def.png" width="50%">
 </center>
 
 注意：
@@ -419,7 +419,7 @@ $$
 >
 > e.g. 虎书将像素中心定义在整数坐标上
 >
-> <img src="E:/Weapons/Graphics/src/games101/screen_def_tiger_book.png" width="50%">
+> <img src="E:/Weapons/Graphics/images/games101/screen_def_tiger_book.png" width="50%">
 
 视口变换非常简单：将NDC从$[-1, 1]^3$变到$x \in [0, width] \times y \in [0, height] \times z\in [-1, 1]$，也就是说$z$不变，在$x, y$上平移和缩放<br>
 （忽略$z$的$(x, y)$在三维空间中表示一条平行于$z$轴的直线）
@@ -481,7 +481,7 @@ MVP + 视口变换将空间中的物体（model in a frustum or cuboid）变到�
 1. 判断给定点在三角形内部 or 外部
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/rendering/point_in_triangle.png" width="30%"> <img src="E:/Weapons/Graphics/src/games101/rendering/point_out_triangle.png" width="30%">
+<img src="E:/Weapons/Graphics/images/games101/rendering/point_in_triangle.png" width="30%"> <img src="E:/Weapons/Graphics/images/games101/rendering/point_out_triangle.png" width="30%">
 </center>
 
 定一个三角形的环绕方向 -> **叉积结果的$z$分量同号则在内部，反之则在外部**。
@@ -519,7 +519,7 @@ $$
 简单采样做光栅化的问题很明显，视觉上不自然，出现锯齿（Jaggies），走样（Aliasing）
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/rendering/aliasing_example_0.png" width="30%"> <img src="E:/Weapons/Graphics/src/games101/rendering/aliasing_example_1.png" width="30%">
+<img src="E:/Weapons/Graphics/images/games101/rendering/aliasing_example_0.png" width="30%"> <img src="E:/Weapons/Graphics/images/games101/rendering/aliasing_example_1.png" width="30%">
 </center>
 
 ### Antialiasing
@@ -544,7 +544,7 @@ SSAA最简单粗暴，直接增大采样率来解决问题。假设屏幕输出�
 **Preview**：超采样直接渲染出来的是一个$n$倍于target size的图像，最终需要下采样到屏幕分辨率才可以显示，这个过程称为**resolve**。对于SSAA，resolve就是下采样，而对于接下来的MSAA，resolve相当于均值滤波。
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/rendering/SSAA_supersampling.png" width="50%">
+<img src="E:/Weapons/Graphics/images/games101/rendering/SSAA_supersampling.png" width="50%">
 </center>
 
 SSAA在效果上是最好的抗锯齿方法，代价就是$n^2$的计算复杂度。光栅化计算量较低，这个代价可以接受。但着色阶段的计算开销大，需要优化这个开销。
@@ -554,7 +554,7 @@ SSAA在效果上是最好的抗锯齿方法，代价就是$n^2$的计算复杂�
 既然着色的开销大，那就仅在光栅化阶段使用supersampling而不对子采样点着色。MSAA在光栅化阶段接受$n^2$的supersampling，与SSAA相同。不同点在于，MSAA计算每个pixel supersampling的覆盖率，而不直接对每个子采样点着色。在着色阶段，对于覆盖率大于0的pixel运行一次pixel shader，并将颜色乘以覆盖率。
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/rendering/MSAA_average.png" width="50%">
+<img src="E:/Weapons/Graphics/images/games101/rendering/MSAA_average.png" width="50%">
 </center>
 
 理论上，MSAA的resolve实际是在连续的三角形上做均值滤波，卷积核大小等于一个pixel square的大小。卷积中的积分运算并未使用解析解，而是用离散采样求和的方式实现。
@@ -580,7 +580,7 @@ SSAA在效果上是最好的抗锯齿方法，代价就是$n^2$的计算复杂�
 算法本身非常简单直接：遍历每个三角形，记录所有**采样点**的最小深度
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/rendering/z-buffer.png" width="50%">
+<img src="E:/Weapons/Graphics/images/games101/rendering/z-buffer.png" width="50%">
 </center>
 
 ## Shading
@@ -596,7 +596,7 @@ SSAA在效果上是最好的抗锯齿方法，代价就是$n^2$的计算复杂�
 着色模型只考虑着色点附近的很小的一块区域，因此这个范围内的物体表面（Surface）可以视为一个平面。与之相对的，对物体在地面上的阴影着色就由non-local的模型负责。
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/rendering/shading_shadow.png" width="50%">
+<img src="E:/Weapons/Graphics/images/games101/rendering/shading_shadow.png" width="50%">
 </center>
 
 > **local & non-local**: local和non-local是相对的，**超出local model建模的区域就是non-local的**。例如，shading建模光照时只考虑着色点附近的一小块区域，因此shading is local。阴影（shadow）属于shading建模区域外的部分，因此对shading来说，shadow就是non-local的。
@@ -615,7 +615,7 @@ SSAA在效果上是最好的抗锯齿方法，代价就是$n^2$的计算复杂�
 $n, l, v$均为单位向量
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/rendering/shading_input.png" width="50%">
+<img src="E:/Weapons/Graphics/images/games101/rendering/shading_input.png" width="50%">
 </center>
 
 > 颜色：表面对不同波长 or 频率的光的吸收率，是$\lambda$ or $f$的函数
@@ -630,7 +630,7 @@ $n, l, v$均为单位向量
 - 环境光（间接光照）：物体不接受直接光照的位置也能看到颜色，是反射了其他物体的反射光
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/rendering/blinn-phong_light_type.png" width="50%">
+<img src="E:/Weapons/Graphics/images/games101/rendering/blinn-phong_light_type.png" width="50%">
 </center>
 
 Blinn-Phong是基础的光线反射模型，主要建模镜面高光和漫反射，最复杂的环境光部分用常系数简单处理，最终的模型是这三部分的简单求和。
@@ -646,7 +646,7 @@ $$
 $I$为单位距离$r=1$处的光强
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/rendering/point_light_intensity.png" width="50%">
+<img src="E:/Weapons/Graphics/images/games101/rendering/point_light_intensity.png" width="50%">
 </center>
 
 #### Diffusion reflection
@@ -663,7 +663,7 @@ I_{rec} \propto \cos \theta = n \cdot l
 $$
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/rendering/blinn-phong_diffusion_lambert_law.png" width="50%">
+<img src="E:/Weapons/Graphics/images/games101/rendering/blinn-phong_diffusion_lambert_law.png" width="50%">
 </center>
 
 - Lambertian diffuse shading
@@ -675,7 +675,7 @@ L_d = k_d (I / r^2) \max(0, n \cdot l)
 $$
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/rendering/blinn-phong_lambertian_diffuse_shading.png" width="50%">
+<img src="E:/Weapons/Graphics/images/games101/rendering/blinn-phong_lambertian_diffuse_shading.png" width="50%">
 </center>
 
 #### Specular reflection
@@ -687,7 +687,7 @@ $$
 直观上我们希望计算观测方向与镜面反射方向的接近程度。镜面反射方向不是直接已知量，但法向是光照方向与镜面反射方向的角分线方向，因此自然想到与法向比较接近程度
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/rendering/blinn-phong_specular_half_vector.png" width="50%">
+<img src="E:/Weapons/Graphics/images/games101/rendering/blinn-phong_specular_half_vector.png" width="50%">
 </center>
 
 - 镜面反射方向
@@ -711,7 +711,7 @@ $$
 环境光是非常复杂的弹弹乐，Blinn-Phong简单将这一项处理为常数项
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/rendering/blinn-phong_ambient_term.png" width="50%">
+<img src="E:/Weapons/Graphics/images/games101/rendering/blinn-phong_ambient_term.png" width="50%">
 </center>
 
 #### Full model
@@ -719,7 +719,7 @@ $$
 完整的Blinn-Phong光照模型就是以上三部分求和
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/rendering/blinn-phong_reflectance_model.png" width="50%">
+<img src="E:/Weapons/Graphics/images/games101/rendering/blinn-phong_reflectance_model.png" width="50%">
 </center>
 
 ### Shading Frequencies
@@ -727,25 +727,25 @@ $$
 着色频率直接影响最终的渲染效果
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/rendering/shading_frequencies_visual_effect.png" width="50%">
+<img src="E:/Weapons/Graphics/images/games101/rendering/shading_frequencies_visual_effect.png" width="50%">
 </center>
 
 - Flat shading：每个多边形只计算一次颜色
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/rendering/flat_shading.png" width="50%">
+<img src="E:/Weapons/Graphics/images/games101/rendering/flat_shading.png" width="50%">
 </center>
 
 - Gouraud shading：计算多边形每个顶点的法向量，应用光照模型计算顶点颜色，然后将颜色插值到每个pixel上
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/rendering/gouraud_shading.png" width="50%">
+<img src="E:/Weapons/Graphics/images/games101/rendering/gouraud_shading.png" width="50%">
 </center>
 
 - Phong shading：计算多边形每个顶点的法向量，插值计算pixel的法向量，然后着色
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/rendering/gouraud_shading.png" width="50%">
+<img src="E:/Weapons/Graphics/images/games101/rendering/gouraud_shading.png" width="50%">
 </center>
 
 接下来要解决两个问题：1. 如何计算顶点的法向量？2. 如何在三角形内部插值计算颜色？
@@ -759,7 +759,7 @@ Flat shading问题很明显：1. 不同三角形间的颜色没有平缓过渡�
 顶点法向计算非常朴素：顶点所在的所有三角形的法向取平均。可以简单取算数平均，也可以为各三角形计算权重（例如计算面积比例）然后加权平均
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/rendering/vertex_normal.png" width="50%">
+<img src="E:/Weapons/Graphics/images/games101/rendering/vertex_normal.png" width="50%">
 </center>
 
 ### Braycentric interpolation
@@ -771,13 +771,13 @@ Flat shading问题很明显：1. 不同三角形间的颜色没有平缓过渡�
 在三角形内部插值的系数是**重心坐标（Braycentric coordinates）**。任意对象均可插值：color, normal, depth, material attributes, etc.
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/rendering/vertex_normal.png" width="50%">
+<img src="E:/Weapons/Graphics/images/games101/rendering/vertex_normal.png" width="50%">
 </center>
 
 插值系数$\alpha, \beta, \gamma$的计算有两种方法：求面积（外积）或直接用坐标硬算
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/rendering/braycentric_coord_area_compute.png" width="30%"><img src="E:/Weapons/Graphics/src/games101/rendering/braycentric_coord_direct_compute.png" width="30%">
+<img src="E:/Weapons/Graphics/images/games101/rendering/braycentric_coord_area_compute.png" width="30%"><img src="E:/Weapons/Graphics/images/games101/rendering/braycentric_coord_direct_compute.png" width="30%">
 </center>
 
 ### Perspective-Correct interpolation
@@ -785,7 +785,7 @@ Flat shading问题很明显：1. 不同三角形间的颜色没有平缓过渡�
 问题：插值应该在三维场景下计算，然后对应到屏幕上的位置，但上面的插值计算是在二维屏幕/投影平面上进行。在相机视角下，只要物体的深度$z$不恒定，透视投影就会导致形状改变，插值系数就会出现偏差
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/rendering/perspective_correct_interp_problem.png" width="50%">
+<img src="E:/Weapons/Graphics/images/games101/rendering/perspective_correct_interp_problem.png" width="50%">
 </center>
 
 数学上，透视投影$M_{persp->ortho}$是一个非线性变换：$x, y$与变换前的物体深度$z$有关，并且深度$z$发生了非线性变化。这导致二维屏幕空间和三维场景空间下计算出的插值系数不相等。因此，在二维屏幕空间下计算重心坐标/插值系数后需要再进行一次矫正，恢复三维场景空间中的真实插值系数，这一步就是**透视矫正**。
@@ -799,7 +799,7 @@ Flat shading问题很明显：1. 不同三角形间的颜色没有平缓过渡�
 
 推导和应用透视矫正插值的关键点：1. 确定插值对象在哪个空间 2. 明确坐标在哪个空间 3. 约束条件
 
-（adapt from [UCR CS130: perspective-correct-interpolation](../src/games101/rendering/perspective-correct-interpolation.pdf)）
+（adapt from [UCR CS130: perspective-correct-interpolation](../materials/perspective-correct-interpolation.pdf)）
 
 带上标的符号（$*^{\prime}$）表示二维屏幕空间中的value，不带上标的符号（$*$）表示投影变换前的三维场景空间中的value
 
@@ -932,13 +932,13 @@ $$
 ### Graphics/Rendering Pipeline
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/rendering/rendering_pipeline.png" width="50%">
+<img src="E:/Weapons/Graphics/images/games101/rendering/rendering_pipeline.png" width="50%">
 </center>
 
 着色频率决定渲染管线上各阶段shader的功能：Gouraud shading在vertex shader（顶点着色器）中进行，Phong shading在fragment/pixel shader中进行
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/rendering/rendering_pipeline_shading_freq.png" width="50%">
+<img src="E:/Weapons/Graphics/images/games101/rendering/rendering_pipeline_shading_freq.png" width="50%">
 </center>
 
 ## Texture Mapping
@@ -946,7 +946,7 @@ $$
 纹理表现为颜色的变化/分布，建模在漫反射系数$k_d$上。物体表面的纹理可以展开为一张二维空间下的纹理图，$u, v$表示这个空间的基向量。类似pixel，纹理图上的纹理单元称为texel（纹素）。纹理映射$\phi: (x, y, z) \rightarrow (u, v)$将三维空间中的位置映射到纹理空间上
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/rendering/texture_mapping_diffuse_albedo.png" width="30%"> <img src="E:/Weapons/Graphics/src/games101/rendering/texture_mapping_function.png" width="30%">
+<img src="E:/Weapons/Graphics/images/games101/rendering/texture_mapping_diffuse_albedo.png" width="30%"> <img src="E:/Weapons/Graphics/images/games101/rendering/texture_mapping_function.png" width="30%">
 </center>
 
 纹理映射的建立方式：
@@ -957,7 +957,7 @@ $$
 无论如何，目前认为$\phi$是已知的。因此应用纹理就是根据$\phi$在$uv$上查找纹理信息的过程
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/rendering/texture_mapping.png" width="50%">
+<img src="E:/Weapons/Graphics/images/games101/rendering/texture_mapping.png" width="50%">
 </center>
 
 ### Magnification and Minification
@@ -967,7 +967,7 @@ $$
 纹理分辨率大，屏幕分辨率小，一个pixel square映射到纹理图上就会覆盖若干个texel
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/rendering/pixel_footprint_in_texture.png" width="30%"><img src="E:/Weapons/Graphics/src/games101/rendering/texture_point_range_query.png" width="30%"><br>
+<img src="E:/Weapons/Graphics/images/games101/rendering/pixel_footprint_in_texture.png" width="30%"><img src="E:/Weapons/Graphics/images/games101/rendering/texture_point_range_query.png" width="30%"><br>
 图中蓝色点是pixel center映射到纹理图上的位置，黑色边界框出了一个pixel square映射到纹理图上的覆盖范围
 </center>
 
@@ -976,7 +976,7 @@ $$
 显然，如果pixel square在纹理图上覆盖的区域较大，只做插值的话就会出现采样不足（欠采样）$\rightarrow$ aliasing！最简单有效的方法自然是SSAA做反走样，效果确实好，计算代价也确实高
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/rendering/texture_aliasing.png" width="30%"><img src="E:/Weapons/Graphics/src/games101/rendering/texture_SSAA.png" width="30%">
+<img src="E:/Weapons/Graphics/images/games101/rendering/texture_aliasing.png" width="30%"><img src="E:/Weapons/Graphics/images/games101/rendering/texture_SSAA.png" width="30%">
 </center>
 
 类似于MSAA对SSAA的优化，可以在range query范围内做平均。由于$\phi$的一般性（大概率是个非线性变换），不同的pixel square映射到纹理图的覆盖区域大小和形状多变，导致计算效率不高，因此需要加速。
@@ -988,7 +988,7 @@ $$
 Mipmap是一种加速range query的方法，核心是近似。覆盖区域大小变化的问题用金字塔解决，形状变化的问题就简单用正方形近似
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/rendering/mipmap_pyramid.png" width="30%"><img src="E:/Weapons/Graphics/src/games101/rendering/mipmap_range_compute.png" width="30%"><img src="E:/Weapons/Graphics/src/games101/rendering/mipmap_square_approximate.png" width="30%"><br>
+<img src="E:/Weapons/Graphics/images/games101/rendering/mipmap_pyramid.png" width="30%"><img src="E:/Weapons/Graphics/images/games101/rendering/mipmap_range_compute.png" width="30%"><img src="E:/Weapons/Graphics/images/games101/rendering/mipmap_square_approximate.png" width="30%"><br>
 左：构建金字塔。中：相邻pixel映射到纹理图上，计算距离并确定对应的金字塔层级。右：用正方形近似
 </center>
 
@@ -997,7 +997,7 @@ Mipmap是一种加速range query的方法，核心是近似。覆盖区域大小
 在Mipmap的第$L$层（$L$从0开始），range query的范围对应一个texel，因此查询$L$层$(u / 2^L, v / 2^L)$位置的值即可。现实中，计算出来的$L$很难是整数，因此在$Nearest(L)$和$Nearest(L) + 1$层分别做bilinear interpolation，然后再做一次线性插值，就可以获得一个平滑的结果。
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/rendering/mipmap_nearest_level.png" width="30%"><img src="E:/Weapons/Graphics/src/games101/rendering/mipmap_trilinear.png" width="30%"><img src="E:/Weapons/Graphics/src/games101/rendering/mipmap_level_smooth.png" width="30%">
+<img src="E:/Weapons/Graphics/images/games101/rendering/mipmap_nearest_level.png" width="30%"><img src="E:/Weapons/Graphics/images/games101/rendering/mipmap_trilinear.png" width="30%"><img src="E:/Weapons/Graphics/images/games101/rendering/mipmap_level_smooth.png" width="30%">
 </center>
 
 > 整个计算过程就类似于2D object detection w/ FPN的分治策略
@@ -1007,7 +1007,7 @@ Mipmap是一种加速range query的方法，核心是近似。覆盖区域大小
 Mipmap用金字塔近似解决了多尺度问题，但仍未解决非线性的$\phi$带来的形状扭曲。Mipmap将覆盖范围近似为正方形，这与真实覆盖范围不一致，求平均后导致了纹理模糊
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/rendering/texture_map_shape_variance.png" width="30%"><img src="E:/Weapons/Graphics/src/games101/rendering/mipmap_blur.png" width="30%">
+<img src="E:/Weapons/Graphics/images/games101/rendering/texture_map_shape_variance.png" width="30%"><img src="E:/Weapons/Graphics/images/games101/rendering/mipmap_blur.png" width="30%">
 </center>
 
 与CV一样，除了最直观的轮廓变化，还可从若干角度考虑形变这件事，例如：长宽比、旋转角度、顶点数固定的多边形覆盖，等等
@@ -1017,14 +1017,14 @@ Mipmap用金字塔近似解决了多尺度问题，但仍未解决非线性的$\
 各向异性过滤（**Anisotropic Filtering**，也称为**Ripmap**）在长宽比上做多尺度建模来缓解形变问题
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/rendering/ripmap.png" width="50%"><br>
+<img src="E:/Weapons/Graphics/images/games101/rendering/ripmap.png" width="50%"><br>
 Mipmap是右上图中的对角线路径，保持长宽比不变。Ripmap建立金字塔矩阵，能够适应H和W方向上的（axis-aligned）形变
 </center>
 
 更复杂的有椭圆加权平均（Elliptically Weighted Average, EWA）滤波。这个方法在纹理滤波中被认为是最好的方法之一
 
 <center>
-<img src="E:/Weapons/Graphics/src/games101/rendering/EWA_filtering.png" width="50%">
+<img src="E:/Weapons/Graphics/images/games101/rendering/EWA_filtering.png" width="50%">
 </center>
 
 这部分可以参考pbrt和文章 https://zhuanlan.zhihu.com/p/105167411

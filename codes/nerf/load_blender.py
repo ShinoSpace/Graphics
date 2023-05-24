@@ -30,10 +30,6 @@ def pose_spherical(theta, phi, radius):
     """ compute pose matrix (camera to world), camera is under spherical coordinate
         where pose is expressed by (r, theta, phi)
 
-        this wiki tells the notation definition of spherical coordinate system:
-        https://en.wikipedia.org/wiki/Spherical_coordinate_system
-        but it seems not be used here
-
         angle range:
         - theta: [-180, 180]
         - phi: [-90, 90]

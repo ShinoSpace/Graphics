@@ -19,7 +19,7 @@ class Embedder:
         
     def create_embedding_fn(self):
         embed_fns = []
-        d = self.kwargs['input_dims']
+        d = self.kwargs['input_dims']   # d=3 for 3d world coordinate (x, y, z)
         out_dim = 0
         if self.kwargs['include_input']:
             embed_fns.append(lambda x : x)
@@ -46,6 +46,7 @@ class Embedder:
 
 
 def get_embedder(multires, i=0):
+    """ build position encoding """
     if i == -1:
         return nn.Identity(), 3
     

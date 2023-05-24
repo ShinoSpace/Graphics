@@ -567,6 +567,7 @@ def train():
         print('NEAR FAR', near, far)
 
     elif args.dataset_type == 'blender':
+        # hwf (list): image height, width and camera focal length
         images, poses, render_poses, hwf, i_split = load_blender_data(args.datadir, args.half_res, args.testskip)
         print('Loaded blender', images.shape, render_poses.shape, hwf, args.datadir)
         i_train, i_val, i_test = i_split
