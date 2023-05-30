@@ -715,8 +715,10 @@ def train():
         # Sample random ray batch
         if use_batching:
             # Random over all images
+            # rays_rgb.shape = [(N-1)*H*W, ro+rd+rgb, 3]
             batch = rays_rgb[i_batch:i_batch+N_rand] # [B, 2+1, 3*?]
             batch = torch.transpose(batch, 0, 1)
+            # batch_rays: ro, rd, target_s: rgb
             batch_rays, target_s = batch[:2], batch[2]
 
             i_batch += N_rand
