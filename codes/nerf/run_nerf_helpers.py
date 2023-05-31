@@ -164,8 +164,20 @@ def get_rays(H, W, K, c2w):
 
 
 def get_rays_np(H, W, K, c2w):
-    """ get rays parametric equation: a ref point `rays_o` and direction `rays_d` """
+    """ get rays parametric equation: a ref point `rays_o` and direction `rays_d`
+        rays are start from camera optical center and emit to image pixel
+    """
     i, j = np.meshgrid(np.arange(W, dtype=np.float32), np.arange(H, dtype=np.float32), indexing='xy')
+    """#^ ####################################################################
+        details of ray direction:
+        original camera coordinate: due to image u - left, v - down, then
+        the original camera coordinate X - left, Y - down, Z - points to image
+
+        we need follow the graphic camera coordinate convention:
+        X - left, Y - up and camera gaze at -Z
+
+        direction vector: points from camera origin to normalized image plane, i.e. Zc = 1
+    """
     dirs = np.stack([(i-K[0][2])/K[0][0], -(j-K[1][2])/K[1][1], -np.ones_like(i)], -1)
     # Rotate ray directions from camera frame to the world frame
     rays_d = np.sum(dirs[..., np.newaxis, :] * c2w[:3,:3], -1)  # dot product, equals to: [c2w.dot(dir) for dir in dirs]
