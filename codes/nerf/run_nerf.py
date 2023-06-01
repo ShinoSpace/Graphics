@@ -532,6 +532,7 @@ def config_parser():
 
 
 def train():
+    ########## TODO: draw a flow chart for this project! ##########
 
     parser = config_parser()
     args = parser.parse_args()
