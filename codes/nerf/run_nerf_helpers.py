@@ -152,13 +152,40 @@ class NeRF(nn.Module):
 
 # Ray helpers
 def get_rays(H, W, K, c2w):
-    i, j = torch.meshgrid(torch.linspace(0, W-1, W), torch.linspace(0, H-1, H))  # pytorch's meshgrid has indexing='ij'
-    i = i.t()
-    j = j.t()
+    """ get rays parametric equation: a ref point `rays_o` and direction `rays_d`
+        rays are start from camera optical center and emit to image pixel
+
+    Args:
+        c2w (Tensor): (3, 4) camera-to-world transform matrix.
+
+    Returns:
+        rays_o, rays_d (Tensor): rays origin point and direction vector in world space.
+            both shape = (H, W, 3) where 3 means (Xw, Yw, Zw)
+    """
+    # torch meshgrid default indexing is "ij"
+    i, j = torch.meshgrid(torch.linspace(0, W-1, W), torch.linspace(0, H-1, H)) # (W, H) for both
+    i = i.t()   # -> (H, W), W coordinate
+    j = j.t()   # -> (H, W), H coordinate
+    """#^ ####################################################################
+        details of ray direction: when we face to image plane,
+        the image pixel coordinate is u - right, v - down,
+        then the raw camera coordinate will be X - right, Y - down, Z - points to image
+
+        we need follow the camera coordinate convention in graphic:
+        X - right, Y - up and camera gaze at -Z
+
+        direction vector: points from camera origin to normalized image plane, i.e. Zc = 1
+    """
+    #^ direction vector in camera space, from origin to Zc = 1 plane
+    #^ dirs.shape = (H, W, 3), 3 means (Xc, Yc, Zc)
     dirs = torch.stack([(i-K[0][2])/K[0][0], -(j-K[1][2])/K[1][1], -torch.ones_like(i)], -1)
     # Rotate ray directions from camera frame to the world frame
-    rays_d = torch.sum(dirs[..., np.newaxis, :] * c2w[:3,:3], -1)  # dot product, equals to: [c2w.dot(dir) for dir in dirs]
+    #^ vector's origin is always at (0, 0, 0), so only rotate applied
+    #^ this is actually c2w.dot(each 3d direction vector), implemented by broadcast
+    #^ rays_d.shape = (H, W, 3)
+    rays_d = torch.sum(dirs[..., np.newaxis, :] * c2w[:3,:3], -1)
     # Translate camera frame's origin to the world frame. It is the origin of all rays.
+    #^ camera coordinate's origin in world space
     rays_o = c2w[:3,-1].expand(rays_d.shape)
     return rays_o, rays_d
 
@@ -166,21 +193,32 @@ def get_rays(H, W, K, c2w):
 def get_rays_np(H, W, K, c2w):
     """ get rays parametric equation: a ref point `rays_o` and direction `rays_d`
         rays are start from camera optical center and emit to image pixel
+
+    Args:
+        c2w (Tensor): (3, 4) camera-to-world transform matrix.
+
+    Returns:
+        rays_o, rays_d (Tensor): rays origin point and direction vector in world space.
+            both shape = (H, W, 3) where 3 means (Xw, Yw, Zw)
     """
     i, j = np.meshgrid(np.arange(W, dtype=np.float32), np.arange(H, dtype=np.float32), indexing='xy')
     """#^ ####################################################################
-        details of ray direction:
-        original camera coordinate: due to image u - left, v - down, then
-        the original camera coordinate X - left, Y - down, Z - points to image
+        details of ray direction: when we face to image plane,
+        the pixel coordinate of image will be u - right, v - down.
+        then the raw camera coordinate will be X - right, Y - down, Z - points to image
 
-        we need follow the graphic camera coordinate convention:
-        X - left, Y - up and camera gaze at -Z
+        we need follow the camera coordinate convention in graphic:
+        X - right, Y - up and camera gaze at -Z
 
         direction vector: points from camera origin to normalized image plane, i.e. Zc = 1
     """
+    #^ direction vector in camera space, from origin to Zc = 1 plane
+    #^ dirs.shape = (H, W, 3), 3 means (Xc, Yc, Zc)
     dirs = np.stack([(i-K[0][2])/K[0][0], -(j-K[1][2])/K[1][1], -np.ones_like(i)], -1)
     # Rotate ray directions from camera frame to the world frame
-    rays_d = np.sum(dirs[..., np.newaxis, :] * c2w[:3,:3], -1)  # dot product, equals to: [c2w.dot(dir) for dir in dirs]
+    #^ vector's origin is always at (0, 0, 0), so only rotate applied
+    #^ this is actually c2w.dot(each 3d direction vector), implemented by broadcast
+    rays_d = np.sum(dirs[..., np.newaxis, :] * c2w[:3,:3], -1)
     # Translate camera frame's origin to the world frame. It is the origin of all rays.
     rays_o = np.broadcast_to(c2w[:3,-1], np.shape(rays_d))
     return rays_o, rays_d

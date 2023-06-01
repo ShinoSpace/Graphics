@@ -673,7 +673,7 @@ def train():
             return
 
     # Prepare raybatch tensor if batching random rays
-    N_rand = args.N_rand
+    N_rand = args.N_rand    #^ train random `N_rand` rays per iteration
     use_batching = not args.no_batching
     if use_batching:
         # For random ray batching
@@ -738,18 +738,25 @@ def train():
             if N_rand is not None:
                 rays_o, rays_d = get_rays(H, W, K, torch.Tensor(pose))  # (H, W, 3), (H, W, 3)
 
+                #^ train first 500 iterations to render center cropped image
+                #^ train 20w iters in total. this looks like warmup
                 if i < args.precrop_iters:
+                    #^ center at (H // 2, W // 2), crop size = (2*dH, 2*dW)
                     dH = int(H//2 * args.precrop_frac)
                     dW = int(W//2 * args.precrop_frac)
                     coords = torch.stack(
                         torch.meshgrid(
-                            torch.linspace(H//2 - dH, H//2 + dH - 1, 2*dH), 
+                            #^ start from H//2, offset up and offset down are both dH
+                            torch.linspace(H//2 - dH, H//2 + dH - 1, 2*dH),
                             torch.linspace(W//2 - dW, W//2 + dW - 1, 2*dW)
                         ), -1)
                     if i == start:
                         print(f"[Config] Center cropping of size {2*dH} x {2*dW} is enabled until iter {args.precrop_iters}")                
                 else:
-                    coords = torch.stack(torch.meshgrid(torch.linspace(0, H-1, H), torch.linspace(0, W-1, W)), -1)  # (H, W, 2)
+                    coords = torch.stack(
+                        torch.meshgrid(torch.linspace(0, H-1, H), torch.linspace(0, W-1, W)),
+                        -1
+                    )  # (H, W, 2)
 
                 coords = torch.reshape(coords, [-1,2])  # (H * W, 2)
                 select_inds = np.random.choice(coords.shape[0], size=[N_rand], replace=False)  # (N_rand,)
