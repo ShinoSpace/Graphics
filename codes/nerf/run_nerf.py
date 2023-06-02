@@ -70,54 +70,90 @@ def render(H, W, K, chunk=1024*32, rays=None, c2w=None, ndc=True,
                   near=0., far=1.,
                   use_viewdirs=False, c2w_staticcam=None,
                   **kwargs):
-    """Render rays
+    """ Render rays
     Args:
-      H: int. Height of image in pixels.
-      W: int. Width of image in pixels.
-      focal: float. Focal length of pinhole camera.
-      chunk: int. Maximum number of rays to process simultaneously. Used to
+        H: int. Height of image in pixels.
+        W: int. Width of image in pixels.
+        focal: float. Focal length of pinhole camera.
+        chunk: int. Maximum number of rays to process simultaneously. Used to
         control maximum memory usage. Does not affect final results.
-      rays: array of shape [2, batch_size, 3]. Ray origin and direction for
-        each example in batch.
-      c2w: array of shape [3, 4]. Camera-to-world transformation matrix.
-      ndc: bool. If True, represent ray origin, direction in NDC coordinates.
-      near: float or array of shape [batch_size]. Nearest distance for a ray.
-      far: float or array of shape [batch_size]. Farthest distance for a ray.
-      use_viewdirs: bool. If True, use viewing direction of a point in space in model.
-      c2w_staticcam: array of shape [3, 4]. If not None, use this transformation matrix for 
-       camera while using other c2w argument for viewing directions.
+        rays: array of shape [2, num_rays, 3]. shape[0] = 2 indicates 
+            ray origin and direction, which coordinate are in world space.
+        c2w: array of shape [3, 4]. Camera-to-world transformation matrix.
+        ndc: bool. If True, represent ray origin, direction in NDC space.
+        near: float or array of shape [batch_size]. Nearest distance for a ray.
+        far: float or array of shape [batch_size]. Farthest distance for a ray.
+        use_viewdirs: bool. If True, use viewing direction of a point in space in model.
+        c2w_staticcam: it should be None or (3, 4) camera intrisic matrix.
+            if not None, we will re-generate ray direction and origin using this matrix.
+            only take effect when use_viewdirs = True.
+    kwargs:
+        ########## unpacked variables from `render_kwargs_train` (dict) ##########
+        network_query_fn : network_query_fn
+        perturb : args.perturb
+        N_importance : args.N_importance
+        network_fine : model_fine
+        N_samples : args.N_samples
+        network_fn : model
+        use_viewdirs : args.use_viewdirs
+        white_bkgd : args.white_bkgd
+        raw_noise_std : args.raw_noise_std
+
     Returns:
-      rgb_map: [batch_size, 3]. Predicted RGB values for rays.
-      disp_map: [batch_size]. Disparity map. Inverse of depth.
-      acc_map: [batch_size]. Accumulated opacity (alpha) along a ray.
-      extras: dict with everything returned by render_rays().
+        rgb_map: [batch_size, 3]. Predicted RGB values for rays.
+        disp_map: [batch_size]. Disparity map. Inverse of depth.
+        acc_map: [batch_size]. Accumulated opacity (alpha) along a ray.
+        extras: dict with everything returned by render_rays().
     """
     if c2w is not None:
         # special case to render full image
         rays_o, rays_d = get_rays(H, W, K, c2w)
     else:
         # use provided ray batch
-        rays_o, rays_d = rays
+        rays_o, rays_d = rays   #^ both are (num_rays, 3) ^#
 
+    """ use_viewdirs (bool): use full 5D input instead of 3D
+
+        use_viewdirs = True
+        in nerf original paper, rendered color is based on view direction,
+        which means nerf MLP should take 5D input PE(x, y, z, theta, phi).
+
+        use_viewdirs = False
+        but for forward facing scenes (e.g. llff data),
+        colors are almost not changed on different view,
+        so 3d input PE(x, y, z) to nerf is okay.
+    """
     if use_viewdirs:
         # provide ray directions as input
-        viewdirs = rays_d
+        viewdirs = rays_d   #^ (num_rays, 3) ^#
         if c2w_staticcam is not None:
             # special case to visualize effect of viewdirs
+            #^ re-generate rays using intrinsic given by c2w_staticcam ^#
             rays_o, rays_d = get_rays(H, W, K, c2w_staticcam)
+        #^ direction vector should be unit vector ^#
         viewdirs = viewdirs / torch.norm(viewdirs, dim=-1, keepdim=True)
         viewdirs = torch.reshape(viewdirs, [-1,3]).float()
 
     sh = rays_d.shape # [..., 3]
     if ndc:
-        # for forward facing scenes
+        """ #^ ndc is only used for forward facing scenes (e.g. llff data) ^#
+            Q: what is forward facing scenes?
+            A: on taking the first picture, take this camera's coordinate as the world.
+               when taking photos from different views, camera's is almost restricted in
+               a specific XY plane, which means Z is almost unchanged.
+               (camera X - right, Y - up and gaze at -Z)
+
+            # TODO: explain after fully understand llff data
+            Q: why near hardcode to 1 here?
+            A: 
+        """
         rays_o, rays_d = ndc_rays(H, W, K[0][0], 1., rays_o, rays_d)
 
     # Create ray batch
-    rays_o = torch.reshape(rays_o, [-1,3]).float()
-    rays_d = torch.reshape(rays_d, [-1,3]).float()
+    rays_o = torch.reshape(rays_o, [-1, 3]).float()
+    rays_d = torch.reshape(rays_d, [-1, 3]).float()
 
-    near, far = near * torch.ones_like(rays_d[...,:1]), far * torch.ones_like(rays_d[...,:1])
+    near, far = near * torch.ones_like(rays_d[..., :1]), far * torch.ones_like(rays_d[..., :1])
     rays = torch.cat([rays_o, rays_d, near, far], -1)
     if use_viewdirs:
         rays = torch.cat([rays, viewdirs], -1)
@@ -246,7 +282,7 @@ def create_nerf(args):
         'raw_noise_std' : args.raw_noise_std,
     }
 
-    # NDC only good for LLFF-style forward facing data
+    #^ NDC only good for LLFF-style forward facing data ^#
     if args.dataset_type != 'llff' or args.no_ndc:
         print('Not ndc!')
         render_kwargs_train['ndc'] = False
@@ -561,7 +597,6 @@ def train():
         if args.no_ndc:
             near = np.ndarray.min(bds) * .9
             far = np.ndarray.max(bds) * 1.
-            
         else:
             near = 0.
             far = 1.
@@ -674,7 +709,7 @@ def train():
             return
 
     # Prepare raybatch tensor if batching random rays
-    N_rand = args.N_rand    #^ train random `N_rand` rays per iteration
+    N_rand = args.N_rand    #^ train random `N_rand` rays per iteration ^#
     use_batching = not args.no_batching
     if use_batching:
         # For random ray batching
@@ -737,34 +772,40 @@ def train():
             pose = poses[img_i, :3,:4]
 
             if N_rand is not None:
-                rays_o, rays_d = get_rays(H, W, K, torch.Tensor(pose))  # (H, W, 3), (H, W, 3)
+                #^ shape = (H, W, 3) for both ^#
+                rays_o, rays_d = get_rays(H, W, K, torch.Tensor(pose))
 
-                #^ train first 500 iterations to render center cropped image
-                #^ train 20w iters in total. this looks like warmup
+                #^ train first 500 iterations to render center cropped image ^#
+                #^ train 20w iters in total. this looks like warmup ^#
                 if i < args.precrop_iters:
-                    #^ center at (H // 2, W // 2), crop size = (2*dH, 2*dW)
+                    #^ center at (H // 2, W // 2), crop size = (2*dH, 2*dW) ^#
                     dH = int(H//2 * args.precrop_frac)
                     dW = int(W//2 * args.precrop_frac)
                     coords = torch.stack(
                         torch.meshgrid(
-                            #^ start from H//2, offset up and offset down are both dH
+                            #^ start from H//2, offset up and offset down are both dH ^#
                             torch.linspace(H//2 - dH, H//2 + dH - 1, 2*dH),
                             torch.linspace(W//2 - dW, W//2 + dW - 1, 2*dW)
                         ), -1)
                     if i == start:
-                        print(f"[Config] Center cropping of size {2*dH} x {2*dW} is enabled until iter {args.precrop_iters}")                
+                        print(
+                            f"[Config] Center cropping of size {2*dH} x {2*dW} is "
+                            "enabled until iter {args.precrop_iters}"
+                        )                
                 else:
                     coords = torch.stack(
                         torch.meshgrid(torch.linspace(0, H-1, H), torch.linspace(0, W-1, W)),
                         -1
                     )  # (H, W, 2)
 
-                coords = torch.reshape(coords, [-1,2])  # (H * W, 2)
-                select_inds = np.random.choice(coords.shape[0], size=[N_rand], replace=False)  # (N_rand,)
+                coords = torch.reshape(coords, [-1, 2])  # (H * W, 2)
+                select_inds = np.random.choice(
+                    coords.shape[0], size=[N_rand], replace=False
+                )  # (N_rand,)
                 select_coords = coords[select_inds].long()  # (N_rand, 2)
                 rays_o = rays_o[select_coords[:, 0], select_coords[:, 1]]  # (N_rand, 3)
                 rays_d = rays_d[select_coords[:, 0], select_coords[:, 1]]  # (N_rand, 3)
-                batch_rays = torch.stack([rays_o, rays_d], 0)
+                batch_rays = torch.stack([rays_o, rays_d], 0)   # (2, N_rand, 3)
                 target_s = target[select_coords[:, 0], select_coords[:, 1]]  # (N_rand, 3)
 
         #####  Core optimization loop  #####

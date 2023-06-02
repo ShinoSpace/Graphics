@@ -152,7 +152,7 @@ class NeRF(nn.Module):
 
 # Ray helpers
 def get_rays(H, W, K, c2w):
-    """ get rays parametric equation: a ref point `rays_o` and direction `rays_d`
+    """ get rays parametric function in world space: a ref point `rays_o` and direction `rays_d`
         rays are start from camera optical center and emit to image pixel
 
     Args:
@@ -166,7 +166,7 @@ def get_rays(H, W, K, c2w):
     i, j = torch.meshgrid(torch.linspace(0, W-1, W), torch.linspace(0, H-1, H)) # (W, H) for both
     i = i.t()   # -> (H, W), W coordinate
     j = j.t()   # -> (H, W), H coordinate
-    """#^ ####################################################################
+    """ #^ #################### details of ray direction #################### ^#
         details of ray direction: when we face to image plane,
         the image pixel coordinate is u - right, v - down,
         then the raw camera coordinate will be X - right, Y - down, Z - points to image
@@ -176,22 +176,23 @@ def get_rays(H, W, K, c2w):
 
         direction vector: points from camera origin to normalized image plane, i.e. Zc = 1
     """
-    #^ direction vector in camera space, from origin to Zc = 1 plane
-    #^ dirs.shape = (H, W, 3), 3 means (Xc, Yc, Zc)
+    #^ direction vector in camera space, from origin to Zc = 1 plane ^#
+    #^ dirs.shape = (H, W, 3), 3 means (Xc, Yc, Zc) ^#
     dirs = torch.stack([(i-K[0][2])/K[0][0], -(j-K[1][2])/K[1][1], -torch.ones_like(i)], -1)
     # Rotate ray directions from camera frame to the world frame
-    #^ vector's origin is always at (0, 0, 0), so only rotate applied
-    #^ this is actually c2w.dot(each 3d direction vector), implemented by broadcast
-    #^ rays_d.shape = (H, W, 3)
+    #^ vector's origin is always at (0, 0, 0), so only rotate applied ^#
+    #^ this is actually c2w.dot(each 3d direction vector), implemented by broadcast ^#
+    #^ rays_d.shape = (H, W, 3) ^#
     rays_d = torch.sum(dirs[..., np.newaxis, :] * c2w[:3,:3], -1)
     # Translate camera frame's origin to the world frame. It is the origin of all rays.
-    #^ camera coordinate's origin in world space
+    #^ camera coordinate's origin in world space ^#
     rays_o = c2w[:3,-1].expand(rays_d.shape)
+
     return rays_o, rays_d
 
 
 def get_rays_np(H, W, K, c2w):
-    """ get rays parametric equation: a ref point `rays_o` and direction `rays_d`
+    """ get rays parametric function in world space: a ref point `rays_o` and direction `rays_d`
         rays are start from camera optical center and emit to image pixel
 
     Args:
@@ -202,7 +203,7 @@ def get_rays_np(H, W, K, c2w):
             both shape = (H, W, 3) where 3 means (Xw, Yw, Zw)
     """
     i, j = np.meshgrid(np.arange(W, dtype=np.float32), np.arange(H, dtype=np.float32), indexing='xy')
-    """#^ ####################################################################
+    """ #^ #################### details of ray direction #################### ^#
         details of ray direction: when we face to image plane,
         the pixel coordinate of image will be u - right, v - down.
         then the raw camera coordinate will be X - right, Y - down, Z - points to image
@@ -212,35 +213,60 @@ def get_rays_np(H, W, K, c2w):
 
         direction vector: points from camera origin to normalized image plane, i.e. Zc = 1
     """
-    #^ direction vector in camera space, from origin to Zc = 1 plane
-    #^ dirs.shape = (H, W, 3), 3 means (Xc, Yc, Zc)
+    #^ direction vector in camera space, from origin to Zc = 1 plane ^#
+    #^ dirs.shape = (H, W, 3), 3 means (Xc, Yc, Zc) ^#
     dirs = np.stack([(i-K[0][2])/K[0][0], -(j-K[1][2])/K[1][1], -np.ones_like(i)], -1)
     # Rotate ray directions from camera frame to the world frame
-    #^ vector's origin is always at (0, 0, 0), so only rotate applied
-    #^ this is actually c2w.dot(each 3d direction vector), implemented by broadcast
+    #^ vector's origin is always at (0, 0, 0), so only rotate applied ^#
+    #^ this is actually c2w.dot(each 3d direction vector), implemented by broadcast ^#
     rays_d = np.sum(dirs[..., np.newaxis, :] * c2w[:3,:3], -1)
     # Translate camera frame's origin to the world frame. It is the origin of all rays.
+    #^ camera coordinate's origin in world space ^#
     rays_o = np.broadcast_to(c2w[:3,-1], np.shape(rays_d))
+
     return rays_o, rays_d
 
 
 def ndc_rays(H, W, focal, near, rays_o, rays_d):
-    # Shift ray origins to near plane
-    t = -(near + rays_o[...,2]) / rays_d[...,2]
-    rays_o = rays_o + t[...,None] * rays_d
-    
-    # Projection
-    o0 = -1./(W/(2.*focal)) * rays_o[...,0] / rays_o[...,2]
-    o1 = -1./(H/(2.*focal)) * rays_o[...,1] / rays_o[...,2]
-    o2 = 1. + 2. * near / rays_o[...,2]
+    """ convert ray parametric function from world space to related NDC space.
+        NDC space is only used in forward facing scenes and keep world space for
+        360 degree scenes.
 
-    d0 = -1./(W/(2.*focal)) * (rays_d[...,0]/rays_d[...,2] - rays_o[...,0]/rays_o[...,2])
-    d1 = -1./(H/(2.*focal)) * (rays_d[...,1]/rays_d[...,2] - rays_o[...,1]/rays_o[...,2])
+        see this for OpenGL 3d projection and NDC space:
+        http://www.songho.ca/opengl/gl_projectionmatrix.html
+        How the NDC works? NeRF paper's appendix C give the whole derivation.
+        but we can see this for better explanation:
+        https://yconquesty.github.io/blog/ml/nerf/nerf_ndc.html#background
+
+    Args:
+        rays_o, rays_d (Tensor): ray origin point and direction vector in world space.
+            shape = (num_rays, 3)
+    """
+
+    """ #^ first shift ray origins to near plane before 3d projection. ^#
+        the intention is: there's no object between optical center and near plane
+        so we do not need sample location in this region
+
+        NOTE: near, far > 0
+    """
+    t = -(near + rays_o[..., 2]) / rays_d[..., 2]
+    rays_o = rays_o + t[..., None] * rays_d
+
+    #^ NeRF appendix C, equation (25) ^#
+    o0 = -1. / (W / (2. * focal)) * rays_o[..., 0] / rays_o[..., 2]
+    o1 = -1. / (H / (2. * focal)) * rays_o[..., 1] / rays_o[..., 2]
+    o2 = 1. + 2. * near / rays_o[..., 2]
+
+    #^ NeRF appendix C, equation (26) ^#
+    d0 = -1./ (W / (2. * focal)) * (rays_d[..., 0] / rays_d[..., 2] - rays_o[..., 0] / rays_o[..., 2])
+    d1 = -1./ (H / (2. * focal)) * (rays_d[..., 1] / rays_d[..., 2] - rays_o[..., 1] / rays_o[..., 2])
     d2 = -2. * near / rays_o[...,2]
-    
-    rays_o = torch.stack([o0,o1,o2], -1)
-    rays_d = torch.stack([d0,d1,d2], -1)
-    
+
+    #^ NeRF appendix C, equation (10) ^#
+    #^ π(o + td) = o' + t'd', where o + td is in world space and o' + t'd' is in NDC space ^#
+    rays_o = torch.stack([o0, o1, o2], -1)
+    rays_d = torch.stack([d0, d1, d2], -1)
+
     return rays_o, rays_d
 
 

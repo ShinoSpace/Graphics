@@ -294,6 +294,10 @@ $$
 
 神经辐射场中同时隐式地存储了材质密度（density）、颜色，并且为了表示3D场景，很可能需要一些辅助信息。
 
+### Flow Chart
+
+
+
 ## Behind the Scenes (n7, e7, s8)
 
 - arxiv: https://arxiv.org/pdf/2301.07668.pdf
