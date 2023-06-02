@@ -242,6 +242,7 @@ def spherify_poses(poses, bds):
 
 def load_llff_data(basedir, factor=8, recenter=True, bd_factor=.75, spherify=False, path_zflat=False):
     #^ llff pose: https://zhuanlan.zhihu.com/p/593204605 -> LLFF真实数据格式
+    #^ related git repo issue: https://github.com/bmild/nerf/issues/34
 
     """ #^ llff data format ^#
         poses: (3, 5, num_views). 5 = 4 + 1, where 3x4 matrix is the real camera pose and
