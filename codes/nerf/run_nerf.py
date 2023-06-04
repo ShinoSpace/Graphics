@@ -18,8 +18,8 @@ from load_deepvoxels import load_dv_data
 from load_blender import load_blender_data
 from load_LINEMOD import load_LINEMOD_data
 
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+cuda_available = torch.cuda.is_available()
+device = torch.device("cuda" if cuda_available else "cpu")
 np.random.seed(0)
 DEBUG = False
 
@@ -78,7 +78,7 @@ def render(H, W, K, chunk=1024*32, rays=None, c2w=None, ndc=True,
         chunk: int. Maximum number of rays to process simultaneously. Used to
         control maximum memory usage. Does not affect final results.
         rays: array of shape [2, num_rays, 3]. shape[0] = 2 indicates 
-            ray origin and direction, which coordinate are in world space.
+            ray origin and direction, which coordinate is in world space.
         c2w: array of shape [3, 4]. Camera-to-world transformation matrix.
         ndc: bool. If True, represent ray origin, direction in NDC space.
         near: float or array of shape [batch_size]. Nearest distance for a ray.
@@ -137,15 +137,53 @@ def render(H, W, K, chunk=1024*32, rays=None, c2w=None, ndc=True,
     sh = rays_d.shape # [..., 3]
     if ndc:
         """ #^ ndc is only used for forward facing scenes (e.g. llff data) ^#
+            #^ ########## this is one of the key problem in NeRF ########## ^#
             Q: what is forward facing scenes?
-            A: on taking the first picture, take this camera's coordinate as the world.
-               when taking photos from different views, camera's is almost restricted in
+            A: when taking photos from different views, camera's is almost restricted in
                a specific XY plane, which means Z is almost unchanged.
                (camera X - right, Y - up and gaze at -Z)
 
-            # TODO: explain after fully understand llff data
+            Q: can we use NDC in 360° scenes?
+            A: No! NDC has strict assumptions: scene must lie behind the near plane Z = -n.
+               force to use NDC on 360° scene will result in failed rendering.
+               see the bad result in this issue: https://github.com/bmild/nerf/issues/47
+
             Q: why near hardcode to 1 here?
-            A: 
+            A: llff data preprocessing rescaled the scenes' near to 1
+               (actually a little bit larger than 1)
+               the corresponding issue is: https://github.com/bmild/nerf/issues/34
+               https://github.com/bmild/nerf/issues/34#issuecomment-616643553 gives a
+               precise conclusion
+
+            Q: this NDC is strange, it seems that the cubic after perspective projection
+               (squeeze camera's frustum + orthographic projection)
+               cannot cover the whole scene captured by all cameras, because it still use
+               image size and camera focal length to determine fov and it is surely
+               not enough to include the whole scene. hence the NDC will not strictly lie in
+               [-1, 1]^3
+            A: that's true. the NDC used here is just another way to express world space
+               and not strictly restrict to [-1, 1]^3.
+               this issue https://github.com/bmild/nerf/issues/45 indirectly proves this.
+               
+            Q: what's the intention to use NDC?
+            A: there're 3 reasons:
+               1. we can sample depth from Z = -n to Z = infinity in NDC space in linear
+               cost. see NeRF's paper appendix C for more details.
+               2. linear sample in NDC space is actually linearly sample 1/Z
+               (1/Z is called inverse depth or diversity). this samples more points for
+               scenes close to camera and samples less that far. this greatly matchs the
+               image's "perspective" characteristic. this issue describe this intuition:
+               https://github.com/bmild/nerf/issues/18#issuecomment-611081167
+               3. it will have negative impact if the input coordinate is not
+               uniformly distributed and linearly sample 1/Z will lead to non-uniform
+               coordinate distribution, as described here:
+               https://github.com/bmild/nerf/issues/18#issuecomment-611106784
+               our another understanding is: outdoor scenes are infinity depth,
+               so sample infinity is infeasible. NDC give a simple way to express
+               infinity-depth scene. beside, if we force to sample very far location
+               directly based on linear diversity (1/Z) sampling, the coordinate range
+               will be too large (unbounded), it will do harm to positional encoding,
+               as described here: https://github.com/bmild/nerf/issues/18#issuecomment-611116466
         """
         rays_o, rays_d = ndc_rays(H, W, K[0][0], 1., rays_o, rays_d)
 
@@ -651,8 +689,8 @@ def train():
 
     if K is None:
         K = np.array([
-            [focal, 0, 0.5*W],
-            [0, focal, 0.5*H],
+            [focal, 0, 0.5 * W],
+            [0, focal, 0.5 * H],
             [0, 0, 1]
         ])
 
@@ -750,9 +788,9 @@ def train():
 
         # Sample random ray batch
         if use_batching:
-            # Random over all images
+            #^ random a batch of rays over all images ^#
             # rays_rgb.shape = [(N-1)*H*W, ro+rd+rgb, 3]
-            batch = rays_rgb[i_batch:i_batch+N_rand] # [B, 2+1, 3*?]
+            batch = rays_rgb[i_batch:i_batch + N_rand] # [B, 2+1, 3*?]
             batch = torch.transpose(batch, 0, 1)
             # batch_rays: ro, rd, target_s: rgb
             batch_rays, target_s = batch[:2], batch[2]
@@ -763,16 +801,27 @@ def train():
                 rand_idx = torch.randperm(rays_rgb.shape[0])
                 rays_rgb = rays_rgb[rand_idx]
                 i_batch = 0
-
         else:
-            # Random from one image
+            """ #^ render an image rather than a batch of shuffled rays ^#
+                random an image as gt and corresponding pose to
+                generate rays to be rendered in world space
+            """
             img_i = np.random.choice(i_train)
             target = images[img_i]
             target = torch.Tensor(target).to(device)
+            """ #^ pose.shape = (3, 5) ^#
+                3x4 matrix is camera-to-world transformation while
+                the last 3x1 vector is [H, W, focal length in pixel]
+            """
             pose = poses[img_i, :3,:4]
 
+            #^ random N_rand rays in selected image to train per iteration ^#
             if N_rand is not None:
-                #^ shape = (H, W, 3) for both ^#
+                """ #^ generate rays ^#
+                    rays start from camera optical center and points to 
+                    pixel in Zc = 1 plane. then transform coordinates to world space.
+                    both origin and direction shape = (H, W, 3)
+                """
                 rays_o, rays_d = get_rays(H, W, K, torch.Tensor(pose))
 
                 #^ train first 500 iterations to render center cropped image ^#
@@ -925,6 +974,9 @@ def train():
 
 
 if __name__=='__main__':
-    torch.set_default_tensor_type('torch.cuda.FloatTensor')
+    if cuda_available:
+        torch.set_default_tensor_type("torch.cuda.FloatTensor")
+    else:
+        torch.set_default_tensor_type("torch.FloatTensor")
 
     train()

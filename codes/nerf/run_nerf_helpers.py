@@ -262,8 +262,12 @@ def ndc_rays(H, W, focal, near, rays_o, rays_d):
     d1 = -1./ (H / (2. * focal)) * (rays_d[..., 1] / rays_d[..., 2] - rays_o[..., 1] / rays_o[..., 2])
     d2 = -2. * near / rays_o[...,2]
 
-    #^ NeRF appendix C, equation (10) ^#
-    #^ π(o + td) = o' + t'd', where o + td is in world space and o' + t'd' is in NDC space ^#
+    """ #^ NeRF appendix C, equation (10) ^#
+        π(o + td) = o' + t'd':
+        π: 3d perspective projection
+        o + td: ray parametric function in world space
+        o' + t'd': ray parametric function in NDC space
+    """
     rays_o = torch.stack([o0, o1, o2], -1)
     rays_d = torch.stack([d0, d1, d2], -1)
 

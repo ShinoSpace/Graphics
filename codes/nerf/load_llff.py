@@ -107,7 +107,7 @@ def _load_data(basedir, factor=None, width=None, height=None, load_imgs=True):
     
     def imread(f):
         if f.endswith('png'):
-            return imageio.imread(f, ignoregamma=True)
+            return imageio.imread(f)
         else:
             return imageio.imread(f)
         
@@ -255,7 +255,7 @@ def load_llff_data(basedir, factor=8, recenter=True, bd_factor=.75, spherify=Fal
 
     # Correct rotation matrix ordering and move variable dim to axis 0
     poses = np.concatenate([poses[:, 1:2, :], -poses[:, 0:1, :], poses[:, 2:, :]], 1)
-    poses = np.moveaxis(poses, -1, 0).astype(np.float32)    #^ (num_views, 3, 5) ^#
+    poses = np.moveaxis(poses, -1, 0).astype(np.float32)    #^ -> (num_views, 3, 5) ^#
     imgs = np.moveaxis(imgs, -1, 0).astype(np.float32)  #^ -> (num_views, H, W, C) ^#
     images = imgs
     #^ -> (num_views, 2). 2 indicates (near, far) ^#
@@ -263,7 +263,8 @@ def load_llff_data(basedir, factor=8, recenter=True, bd_factor=.75, spherify=Fal
 
     # Rescale if bd_factor is provided
     #^ rescale the scene: min near plane rescale to 1 / bd_factor ^#
-    sc = 1. if bd_factor is None else 1. / (bds.min() * bd_factor)
+    # sc = 1. if bd_factor is None else 1. / (bds.min() * bd_factor)
+    sc = 1. if bd_factor is None else 1. / (bds.min() * 1.0)
     poses[:, :3, 3] *= sc
     bds *= sc
 
