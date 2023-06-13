@@ -284,7 +284,13 @@ $$
 
 直观上，Inverse Transform Sampling采样的$N_f$个位置就是光路上存在物体的区域，是需要重点训练的位置，因此设置$N_f > N_C$。
 
+### NDC details
+
+TODO：参考 https://yconquesty.github.io/blog/ml/nerf/nerf_ndc.html#analysis 和论文的appendix
+
 ### NeRF的问题
+
+#### 无法直接处理动态场景（★★★★★）
 
 #### 光路独立，同一个物体不同光路缺乏关联性
 
