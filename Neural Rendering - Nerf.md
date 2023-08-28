@@ -1,5 +1,3 @@
-## Research Groups
-
 ## Core Problems in Scholar
 
 ## Reviews
@@ -265,24 +263,22 @@ $$
 <img src="E:/weapons/Graphics/images/research/nerf-PE-2.png" width="50%">
 </center>
 
-直观上，**DeepNet输入数据的性质直接影响模型学习的倾向**。如果输入数据的性质/分布与预期的输出不匹配，模型学习效果就会变差。直接给MLP输入$(x, y, z, \theta, \phi)$，相邻位置变化不明显（慢变、低频），MLP就较难学好高频变化。
+直观上，**喂给深度网络的数据的性质直接影响模型学习的倾向**。如果输入数据的性质/分布与预期的输出不匹配，模型学习效果就会变差。直接给MLP输入$(x, y, z, \theta, \phi)$，相邻位置的输出变化不明显（慢变、低频），这种情况占多数，因此MLP就较难学好高频变化。
 
 ### Hierarchical Scene Representation
 
 射线上采样，采了很多空气，但很显然有物体的位置是更重要的，因此需要重要性采样。重要性采样也是Ray Tracing中的重要部分。
 
-在stratified sampling基础上，NeRF叠加了一种由粗到细的（coarse-to-fine）场景表示：训练coarse和fine两个场景表示网络。coarse network直接在射线上stratified sample $N_c$个点，计算渲染方程（$hat$表示模型预测值）
+在stratified sampling基础上叠加一种由粗到细的（coarse-to-fine）场景表示：训练coarse和fine两个场景表示网络。训练coarse network时，在射线上直接均匀采样$N_c$个点，计算渲染方程（$hat$表示模型预测值）
 
 $$
 \hat{C}_c(r) = \sum_{i=1}^{N_c} w_i c_i,
 \hspace{2pt} w_i = T_i(1 - e^{-\sigma_i \delta_i})
 $$
 
-这里将渲染方程看作光路上所有采样位置颜色的加权和，权重$w_i$为$\alpha_i = 1 - e^{-\sigma_i \delta_i}$与透射率$T_i$的乘积，但权重不满足归一化条件$\sum_i w_i = 1$，因此再做一步归一化就得到在光路上划分的分段区间上的离散分布$\hat{w}_i = w_i / \sum_{j=1}^{N_c}$（$\hat{w}_i$就类似于alpha compositing的加权系数）。用逆变换采样（Inverse Transform Sampling）根据分布$\hat{w}_i$再采样$N_f$个位置。无论这些位置上是否有物体，都是重点学习的区域（有物体，肯定要多学。没物体，说明是个错误的预测，更要着重学，相当于hard negative mining）。$N_c + N_f$送进fine network进行学习。
+将渲染方程看作光路上所有采样位置颜色的加权和，权重$w_i$为$\alpha_i = 1 - e^{-\sigma_i \delta_i}$与透射率$T_i$的乘积。但权重不满足归一化条件$\sum_i w_i = 1$，因此再做一步归一化就得到在光路上划分的分段区间上的离散分布$\hat{w}_i = w_i / \sum_{j=1}^{N_c}$（$\hat{w}_i$就类似于alpha compositing的加权系数）。用逆变换采样（Inverse Transform Sampling）根据分布$\hat{w}_i$再采样$N_f$个位置。无论这些位置上是否有物体，都是重点学习的区域（有物体，肯定要多学。没物体，说明是个错误的预测，更要着重学，相当于hard negative mining），因此$N_f > N_c$。$N_c + N_f$个点送进fine network训练。
 
 > 逆变换采样：[Inverse Transform Sampling](./Fundamental%20Mathematics.md#Inverse%20Transform%20Sampling)
-
-直观上，Inverse Transform Sampling采样的$N_f$个位置就是光路上存在物体的区域，是需要重点训练的位置，因此设置$N_f > N_C$。
 
 ### NDC details
 
