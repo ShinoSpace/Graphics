@@ -284,9 +284,13 @@ $$
 
 TODO：参考 https://yconquesty.github.io/blog/ml/nerf/nerf_ndc.html#analysis 和论文的appendix
 
-### NeRF的问题
+### NeRF做重建的问题
 
-#### 无法直接处理动态场景（★★★★★）
+#### 多视角一致性约束（Depth估计）
+
+#### 动态物体
+
+### NeRF的问题
 
 #### 光路独立，同一个物体不同光路缺乏关联性
 
@@ -327,28 +331,22 @@ TODO：参考 https://yconquesty.github.io/blog/ml/nerf/nerf_ndc.html#analysis �
 
 1. occupancy仍然使用神经辐射场，没有盲目将隐式表示换为网格表示
 
-    隐式表示的最大优势就是连续性。神经辐射场隐式表示连续的3D场景空间，常规的occupancy grid可以直接采样神经辐射场生成。直接在occupancy grid上进行体渲染不是最优解
+隐式表示的最大优势就是连续性。神经辐射场隐式表示连续的3D场景空间，常规的occupancy grid可以直接采样神经辐射场生成。直接在occupancy grid上进行体渲染不是最优解
 
 2. 颜色不必预测，可以复用视角相似的图像
 
-    这一点是比较显然的，只要视角相差不大，颜色差别很小，通过pose直接投影取值即可
+这一点是比较显然的，只要视角相差不大，颜色差别很小，通过pose直接投影取值即可
 
 3. Per-pixel reprojection loss能够自适应地处理遮挡问题
 
-    训练时选取$k$张「参考图」取颜色，在新视角下分别渲染出$k$张图。计算损失时，只让取到正确颜色的pixel对训练有贡献，完成这件事的方法是*per-pixel minmum*：$k$张渲染出的图与监督图像分别计算逐像素的loss（不做reduction），在$(u, v)$位置的像素有$k$个loss，最小的loss对参数优化产生贡献。这种方法自适应地处理了遮挡问题
+训练时选取$k$张「参考图」取颜色，在新视角下分别渲染出$k$张图。计算损失时，只让取到正确颜色的pixel对训练有贡献，完成这件事的方法是*per-pixel minmum*：$k$张渲染出的图与监督图像分别计算逐像素的loss（不做reduction），在$(u, v)$位置的像素有$k$个loss，最小的loss对参数优化产生贡献。这种方法自适应地处理了遮挡问题，损失函数源于[Monodepth2 (ICCV19)](./papers/monodepth2-ssl.pdf)
 
-    <center>
-    <img src="E:/weapons/Graphics/images/research/per-pixel_reproj_loss.png" width="65%">
-    </center>
-
-    这个损失函数源于[Monodepth2 (ICCV19)](./papers/monodepth2-ssl.pdf)，这个工作用自监督学习做训练，在当时是非常超前的
-
-    <center>
-    <img src="E:/weapons/Graphics/images/research/monodepth2.png" width="65%">
-    </center>
+<center>
+<img src="E:/weapons/Graphics/images/research/per-pixel_reproj_loss.png" width="55%"> <img src="E:/weapons/Graphics/images/research/monodepth2.png" width="55%">
+</center>
 
 4. density必须抑制错误的颜色
 
-    <center>
-    <img src="E:/weapons/Graphics/images/research/behind-the-scene.png" width="30%">
-    </center>
+<center>
+<img src="E:/weapons/Graphics/images/research/behind-the-scene.png" width="30%">
+</center>
